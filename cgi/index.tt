@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>letsencrypt cPanel</title>
+
+  <!-- Bootstrap -->
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css">
+
+  <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+  <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+  <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.2/html5shiv.js"></script>
+      <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+</head>
+
+<body>
+  <div class="container">
+    <div class="content">
+      <legend class="well text-center text-warning fa fa-expeditedssl fa-lg"> Manage letsencrypt ssl certificate</legend>
+      [% IF message %]
+      <div class="alert alert-[% status %] alert-dismissible">
+        <div class="text-center">
+          [% message %]
+        </div>
+      </div>
+     [% END %]
+      <div class="panel panel-default">
+        <div class="panel-heading clearfix">
+          <strong>SSL enabled Vhosts</strong>
+          <div class="btn pull-right">
+            <a href="#" class="btn btn-danger btn-mini" data-toggle="modal" data-target="#install">
+              <span class="fa fa-chain fa-sm"></span>
+              Install letsencrypt SSL Cert
+            </a>
+            <a href="#" class="btn btn-warning btn-mini" data-toggle="modal" data-target="#renew">
+              <span class="fa fa-chain fa-sm"></span>
+              Renew letsencrypt SSL Cert
+            </a>
+          </div>
+        </div>
+        <div class="panel-body">
+          <table class="table" id="example">
+            <thead>
+              <tr>
+                <th>Domain</th>
+                <th>Provider</th>
+                <th>Expiry Date</th>
+                <th>Days Left</th>
+              </tr>
+            </thead>
+            <tbody>
+            [% FOREACH account IN installd_domains.keys %]
+              [% IF installd_domains.$account.status == 'Expired' %]
+                <tr class="text-danger">
+              [% ELSE %]
+                <tr class="text-info">
+              [% END %]
+                <td>[% account %]</td>
+                <td>[% installd_domains.$account.issuer_organizationName %]</td>
+                <td>[% format_time(installd_domains.$account.not_after) %]</td>
+                <td>[% installd_domains.$account.daysleft %]</td>
+              </tr>
+            [% END %]
+           </tbody>
+          </table>
+        </div>
+      </div>
+      <!-- Modal -->
+      <div class="modal fade" id="renew" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <!-- Modal Header -->
+            <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal">
+                <span aria-hidden="true">&times;</span>
+                <span class="sr-only">Close</span>
+              </button>
+              <h4 class="modal-title" id="myModalLabel">
+                Renew SSL certificate
+              </h4>
+            </div>
+            <!-- Modal Body -->
+            <div class="modal-body">
+             [% IF expired_domains.length > '0' %]
+              <form class="form-horizontal" role="form">
+                <div class="form-group">
+                  <label class="col-sm-2 control-label" for="inputdomain3">Domain</label>
+                  <div class="col-sm-10">
+                    <select class="form-control scrollable" name="domain" id="inputdomain3">
+                      [% FOREACH domain IN expired_domains %]
+                        <option>[% domain %]</option>
+                      [% END %]
+                    </select>
+                  </div>
+                   <input type="hidden" name="action" value="renew"> 
+                </div>
+                <div class="form-group">
+                  <div class="col-sm-offset-2 col-sm-10">
+                    <button type="submit" class="btn btn-default">Submit</button>
+                  </div>
+                </div>
+              </form>
+              [% END %]
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Modal -->
+      <div class="modal fade" id="install" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <!-- Modal Header -->
+            <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal">
+                <span aria-hidden="true">&times;</span>
+                <span class="sr-only">Close</span>
+              </button>
+              <h4 class="modal-title" id="myModalLabel">
+                Install SSL certificate
+              </h4>
+            </div>
+            <!-- Modal Body -->
+            <div class="modal-body">
+              <form class="form-horizontal" role="form">
+                <div class="form-group">
+                  <label class="col-sm-2 control-label" for="inputdomain3">Domain</label>
+                  <div class="col-sm-10">
+                    <select class="form-control" name="domain" id="inputdomain3">
+                      [% FOREACH domain IN domains %]
+                      <option>[% domain %]</option>
+                      [% END %]
+                    </select>
+                  </div>
+                   <input type="hidden" name="action" value="install"> 
+                </div>
+                <div class="form-group">
+                  <div class="col-sm-offset-2 col-sm-10">
+                    <button type="submit" class="btn btn-default">Submit</button>
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Modal -->
+    </div>
+  </div>
+  <div class="navbar navbar-default navbar-fixed-bottom">
+    <div class="container">
+      <p class="navbar-text pull-left">© 2016 -
+        <a href="http://ndimensionz.com" target="_blank">Ndimensionz</a>
+      </p>
+
+      <a href="https://letsencrypt.org/" target="_blank" class="navbar-btn btn-danger btn pull-right">
+        <span class="fa fa-lock"></span> LetsEncrypt</a>
+    </div>
+  </div>
+  <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+  <!-- Include all compiled plugins (below), or include individual files as needed -->
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+</body>
+</html>
