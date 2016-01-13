@@ -10,20 +10,20 @@ if [ ! `id -u` = 0 ]; then
   exit 1;
 fi
 
-if [[ ${os_version} -ne '6' ]]; then
-  echo -e "\033[40m\033[001;031mERROR: only supported version is CentOS 6x\033[0m"
-  exit 1;
-fi
-
 if [ ! -e "/usr/bin/python2.7" ]; then
-  rpm -ivh https://rhel6.iuscommunity.org/ius-release.rpm
-  rpm -ivh https://dl.fedoraproject.org/pub/epel/epel-release-latest-6.noarch.rpm
+  if [ ${os_version} -eq '6' ]; then
+    rpm -ivh https://rhel6.iuscommunity.org/ius-release.rpm
+    rpm -ivh https://dl.fedoraproject.org/pub/epel/epel-release-latest-6.noarch.rpm
 
-  yum install -y python27 python27-devel python27-pip python27-setuptools python27-virtualenv --enablerepo=ius
+    yum install -y python27 python27-devel python27-pip python27-setuptools python27-virtualenv --enablerepo=ius
 
-  if [[ ! -e "/usr/bin/python2.7" ]]; then
-    echo -e "\033[40m\033[001;031mERROR: python27 installation  failed, please install the same and try again \033[0m"
-    exit 1
+    if [[ ! -e "/usr/bin/python2.7" ]]; then
+      echo -e "\033[40m\033[001;031mERROR: python27 installation  failed, please install the same and try again \033[0m"
+      exit 1
+    fi
+  else
+     echo -e "\033[40m\033[001;031mERROR: Please install python 2.7 manually and re-run this script \033[0m"
+     exit 1;
   fi
 fi
 
