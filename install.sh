@@ -3,6 +3,7 @@
 letsencrypt_dir="/usr/local/letsencrypt"
 cwd=$(pwd)
 os_version="$(rpm -q --qf %{version} `rpm -q --whatprovides redhat-release` | cut -c 1)"
+python27=$(which python2.7 2> /dev/null);
 
 if [ ! `id -u` = 0 ]; then
   echo
@@ -10,7 +11,7 @@ if [ ! `id -u` = 0 ]; then
   exit 1;
 fi
 
-if [ ! -e "/usr/bin/python2.7" ]; then
+if [ ! -e "${python27}" ]; then
   if [ ${os_version} -eq '6' ]; then
     rpm -ivh https://rhel6.iuscommunity.org/ius-release.rpm
     rpm -ivh https://dl.fedoraproject.org/pub/epel/epel-release-latest-6.noarch.rpm
