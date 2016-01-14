@@ -12,6 +12,12 @@ Whostmgr::ACLS::init_acls();
 
 my $cgi = CGI->new();
 
+if (!Whostmgr::ACLS::hasroot()) {
+   print $cgi->header('application/text', '400 Bad request');
+   print 'Access denied';
+   exit 1;
+}
+
 my $cP_Datas = {
     SECURITY_TOKEN => $ENV{cp_security_token},
     WHM_USER       => $ENV{REMOTE_USER},
