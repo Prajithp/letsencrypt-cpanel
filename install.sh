@@ -39,7 +39,7 @@ if [[ ! -e "${letsencrypt_dir}/letsencrypt-auto" ]]; then
 
   sed -i "s|--python python2|--python python2.7|" ${letsencrypt_dir}/letsencrypt-auto
 
-  /usr/local/letsencrypt/letsencrypt-auto --verbose >/dev/null 2&>1
+  /usr/local/letsencrypt/letsencrypt-auto --verbose >/dev/null 2>&1
 fi
 
 if [[ -x "/usr/local/cpanel/bin/register_appconfig" ]]; then
