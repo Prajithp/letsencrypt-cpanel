@@ -153,12 +153,12 @@
   </div>
   <div class="navbar navbar-default navbar-fixed-bottom">
     <div class="container">
-      <p class="navbar-text pull-left">© 2016 -
-        <a href="http://ndimensionz.com" target="_blank">Ndimensionz</a>
+      <p class="navbar-text pull-left">&copy; 2016 - App Developed By Prajith
+           <a href="http://ndimensionz.com" target="_blank" >Ndimensionz</a>
       </p>
-
-      <a href="https://letsencrypt.org/" target="_blank" class="navbar-btn btn-danger btn pull-right">
-        <span class="fa fa-lock"></span> LetsEncrypt</a>
+      
+      <a href="http://ndimensionz.com" target="_blank" class="navbar-btn btn-danger btn pull-right">
+      <span class="glyphicon glyphicon-star"></span> Ndimensionz</a>
     </div>
   </div>
   <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
