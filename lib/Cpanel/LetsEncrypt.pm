@@ -2,7 +2,6 @@ package Cpanel::LetsEncrypt;
 
 use JSON              ();
 use IPC::Open3        ();
-use Cpanel::PublicAPI ();
 use File::Temp        ();
 use Data::Dumper      ();
 use Cpanel::YAML      ();
@@ -35,12 +34,24 @@ sub _init {
     my $accesshash = _read_hash();
     my $username   = 'root';
 
-    $self->{whm_api} = Cpanel::PublicAPI->new(
-        usessl     => 0,
-        user       => $username,
-        accesshash => $accesshash
-    ) or die $!;
+    my $modules = {
+          'Cpanel/PublicAPI.pm' => 'Cpanel::PublicAPI',
+          'cPanel/PublicAPI.pm' => 'cPanel::PublicAPI',
+    };
 
+    foreach my $module (keys %{$modules}) {
+        eval { require "$module"; };
+
+        if ( !$@ ) {
+            $self->{whm_api} = $modules->{$module}->new(
+                usessl     => 0,
+                user       => $username,
+                accesshash => $accesshash
+            ) or die $!;
+
+            last;
+        }
+    }
 }
 
 sub activate_ssl_certificate {
