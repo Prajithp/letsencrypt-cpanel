@@ -13,5 +13,5 @@
 cd letsencrypt-cpanel
 ./install.sh
 ```
-If everything goes well, you can see a icon in the WHM >> Plugins Section
+If everything goes well, you can see an icon in the WHM >> Plugins Section
 
