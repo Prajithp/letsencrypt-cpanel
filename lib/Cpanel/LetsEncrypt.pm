@@ -83,6 +83,9 @@ sub activate_ssl_certificate {
       $self->liveapi_request( 'accountsummary', { domain => $self->{domain} } )
       ->{acct}->[0]->{email};
 
+    my $aliases = $json_resp->{userdata}->{serveralias};
+    $aliases =~ s/\s+/\,/g;
+
     unless ($email) {
         $return_vars->{message} =
           "Update the domain owner email id in whm first";
@@ -100,7 +103,7 @@ sub activate_ssl_certificate {
             'agree-tos'        => 'True',
             'ip_address'       => $json_resp->{userdata}->{ip},
             'email'            => $email,
-            'domains'          => "$self->{domain}, www.$self->{domain}",
+            'domains'          => "$self->{domain}, $aliases",
             'username'         => $json_resp->{userdata}->{user},
         };
     }
