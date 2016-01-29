@@ -76,12 +76,15 @@ sub activate_ssl_certificate {
         return $return_vars;
     }
 
-    my $json_resp =
+    my $domainuserdata =
       $self->liveapi_request( 'domainuserdata', { domain => $self->{domain} } );
 
-    my $email =
-      $self->liveapi_request( 'accountsummary', { domain => $self->{domain} } )
-      ->{acct}->[0]->{email};
+    my $json_resp = (ref $domainuserdata->{data}) ? $domainuserdata->{data} : $domainuserdata;
+
+    my $accountsummary =
+      $self->liveapi_request( 'accountsummary', { domain => $self->{domain} } );
+
+    my $email = (ref $accountsummary->{data}) ? $accountsummary->{data}->{acct}->[0]->{email} : $accountsummary->{acct}->[0]->{email};
 
     my $aliases = $json_resp->{userdata}->{serveralias};
     $aliases =~ s/\s+/\,/g;
@@ -93,7 +96,7 @@ sub activate_ssl_certificate {
     }
 
     my $hash;
-    if ( $json_resp->{result}[0]->{status} ) {
+    if ( $domainuserdata->{result}[0]->{status} or $domainuserdata->{metadata}->{result} eq '1') {
         $hash = {
             'rsa-key-size'  => '4096',
             'authenticator' => 'webroot',
@@ -373,7 +376,9 @@ sub listaccts {
 
     my @domains;
     my $ssl_vhosts   = $self->fetch_installed_ssl_info;
-    my $accounts_ref = $self->liveapi_request('listaccts');
+    my $response     = $self->liveapi_request('listaccts');
+
+    my $accounts_ref = (ref $response->{data}) ? $response->{data} : $response;
 
     foreach my $acct ( @{ $accounts_ref->{acct} } ) {
         push( @domains, $acct->{domain} )
