@@ -1,11 +1,11 @@
-#!/usr/local/cpanel/3rdparty/bin/perl
+#!/usr/bin/perl
 
 use lib '/usr/local/cpanel';
-use Cpanel::Validate::Domain     ();
-use Whostmgr::ACLS               ();
-use Cpanel::LetsEncrypt          ();
-use JSON                         ();
-use CGI                          ();
+use Whostmgr::ACLS           ();
+use Cpanel::LetsEncrypt      ();
+use Cpanel::LetsEncrypt::WHM ();
+use JSON                     ();
+use CGI                      ();
 use Template;
 
 Whostmgr::ACLS::init_acls();
@@ -13,122 +13,89 @@ Whostmgr::ACLS::init_acls();
 my $cgi = CGI->new();
 
 if (!Whostmgr::ACLS::hasroot()) {
-   print $cgi->header('application/text', '400 Bad request');
-   print 'Access denied';
-   exit 1;
+  print $cgi->header('application/text', '400 Bad request');
+  print 'Access denied';
+  exit 1;
 }
 
-my $cP_Datas = {
-    SECURITY_TOKEN => $ENV{cp_security_token},
-    WHM_USER       => $ENV{REMOTE_USER},
-    WHM_PASS       => $ENV{REMOTE_PASSWORD},
-    HOST           => $ENV{HTTP_HOST},
-};
+my $cP_Datas = {SECURITY_TOKEN => $ENV{cp_security_token}, WHM_USER => $ENV{REMOTE_USER}, WHM_PASS => $ENV{REMOTE_PASSWORD}, HOST => $ENV{HTTP_HOST},};
 
-my $letsencrypt = Cpanel::LetsEncrypt->new();
+my $whm         = Cpanel::LetsEncrypt::WHM->new();
 
 my $vars = {
-    'message'          => undef,
-    'status'           => 'success',
-    'version'          => $Cpanel::LetsEncrypt::VERSION,
-    'installd_domains' => $letsencrypt->fetch_installed_ssl_info(),
-    'domains'          => $letsencrypt->listaccts(),
-    'expired_domains'  => $letsencrypt->get_expired_domains,
-    format_time        => sub { return scalar localtime(shift) },
+  'message'          => undef,
+  'status'           => 'success',
+  'version'          => $Cpanel::LetsEncrypt::VERSION,
+  'installd_domains' => $whm->fetch_installed_ssl_info(),
+  'domains'          => $whm->listaccts(),
+  'expired_domains'  => $whm->get_expired_domains,
+  'format_time'      => sub { return scalar localtime(shift) },
 };
 
 my $action = $cgi->param('action');
+my $domain = _sanitize($cgi->param('domain'));
 
-if ( $action eq 'renew' ) {
-    my $domain = _sanitize( $cgi->param('domain') );
+my $letsencrypt = Cpanel::LetsEncrypt->new(domain => $domain) if ( defined $domain && defined $action );
 
-    if ( !Cpanel::Validate::Domain::is_valid_cpanel_domain($domain) ) {
-        $vars->{message} = "Invalid Domain name";
-        $vars->{status}  = "danger";
+if ($action eq 'renew' and defined $domain) {
 
-        print $cgi->header();
-        build_template( 'index.tt', $vars );
-        exit 0;
-    }
+  my $result_ref = $letsencrypt->renew_ssl_certificate();
 
-    my $result_ref = $letsencrypt->renew_ssl_certificate($domain);
-
-    unless ( $result_ref->{status} ) {
-        $vars->{status} = 'danger';
-        $vars->{message} =
-            $result_ref->{message}
-          ? $result_ref->{message}
-          : 'Something went wrong, kindly check the letsencrypt log file';
-
-        print $cgi->header();
-        build_template( 'index.tt', $vars );
-        exit 0;
-    }
-
-    $vars->{message} = $result_ref->{message};
+  unless ($result_ref->{status}) {
+    $vars->{status} = 'danger';
+    $vars->{message} = $result_ref->{message} ? $result_ref->{message} : 'Something went wrong, kindly check the letsencrypt log file';
 
     print $cgi->header();
-    build_template( 'index.tt', $vars );
+    build_template('index.tt', $vars);
     exit 0;
+  }
+
+  $vars->{message} = $result_ref->{message};
+
+  print $cgi->header();
+  build_template('index.tt', $vars);
+  exit 0;
 }
-elsif ( $action eq 'install' ) {
-    my $domain = _sanitize( $cgi->param('domain') );
+elsif ($action eq 'install' and defined $domain) {
 
-    if ( !Cpanel::Validate::Domain::is_valid_cpanel_domain($domain) ) {
-        $vars->{message} = "Invalid Domain name, $domain";
-        $vars->{status}  = "danger";
+  my $result_ref = $letsencrypt->activate_ssl_certificate();
 
-        print $cgi->header();
-        build_template( 'index.tt', $vars );
-        exit 0;
-    }
-
-    my $result_ref = $letsencrypt->activate_ssl_certificate($domain);
-
-    unless ( $result_ref->{status} ) {
-        $vars->{status} = 'danger';
-        $vars->{message} =
-            $result_ref->{message}
-          ? $result_ref->{message}
-          : 'Something went wrong, kindly check the letsencrypt log file';
-
-        print $cgi->header();
-        build_template( 'index.tt', $vars );
-        exit 0;
-    }
-
-    $vars->{message} = $result_ref->{message};
+  unless ($result_ref->{status}) {
+    $vars->{status} = 'danger';
+    $vars->{message} = $result_ref->{message} ? $result_ref->{message} : 'Something went wrong, kindly check the letsencrypt log file';
 
     print $cgi->header();
-    build_template( 'index.tt', $vars );
+    build_template('index.tt', $vars);
     exit 0;
+  }
+
+  $vars->{message} = $result_ref->{message};
+
+  print $cgi->header();
+  build_template('index.tt', $vars);
+  exit 0;
 }
 else {
-    $vars->{status} = undef;
-    print $cgi->header();
-    build_template( 'index.tt', $vars );
-    exit 0;
+  $vars->{status} = undef;
+  print $cgi->header();
+  build_template('index.tt', $vars);
+  exit 0;
 
 }
 
 sub build_template {
-    my ( $file, $vars_ref ) = @_;
+  my ($file, $vars_ref) = @_;
 
-    my $template = Template->new(
-        {
-            INCLUDE_PATH => '/usr/local/cpanel/whostmgr/docroot/cgi/letsencrypt',
-        }
-    );
+  my $template = Template->new({INCLUDE_PATH => '/usr/local/cpanel/whostmgr/docroot/cgi/letsencrypt',});
 
-    $template->process( $file, $vars_ref )
-      || die 'Template-error: ' . $template->error();
+  $template->process($file, $vars_ref) || die 'Template-error: ' . $template->error();
 
 }
 
 # copied from cPanel ip-manager plugin;
 sub _sanitize {    #Sanitize input field input
-    my $text = shift;
-    return '' if !$text;
-    $text =~ s/([;<>\*\|`&\$!?#\(\)\[\]\{\}:'"\\])/\\$1/g;
-    return $text;
+  my $text = shift;
+  return '' if !$text;
+  $text =~ s/([;<>\*\|`&\$!?#\(\)\[\]\{\}:'"\\])/\\$1/g;
+  return $text;
 }

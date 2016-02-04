@@ -54,7 +54,7 @@
               </tr>
             </thead>
             <tbody>
-            [% FOREACH account IN installd_domains.keys %]
+            [% FOREACH account IN installd_domains.keys.sort %]
               [% IF installd_domains.$account.status == 'Expired' %]
                 <tr class="text-danger">
               [% ELSE %]
@@ -92,7 +92,7 @@
                   <label class="col-sm-2 control-label" for="inputdomain3">Domain</label>
                   <div class="col-sm-10">
                     <select class="form-control scrollable" name="domain" id="inputdomain3">
-                      [% FOREACH domain IN expired_domains %]
+                      [% FOREACH domain IN expired_domains.sort %]
                         <option>[% domain %]</option>
                       [% END %]
                     </select>
@@ -131,7 +131,7 @@
                   <label class="col-sm-2 control-label" for="inputdomain3">Domain</label>
                   <div class="col-sm-10">
                     <select class="form-control" name="domain" id="inputdomain3">
-                      [% FOREACH domain IN domains %]
+                      [% FOREACH domain IN domains.sort %]
                       <option>[% domain %]</option>
                       [% END %]
                     </select>
