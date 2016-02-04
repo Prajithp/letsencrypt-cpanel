@@ -129,9 +129,9 @@ sub renew_ssl_certificate {
         return $return_vars;
     }
 
-    my @expired_domains = $self->{whm}->get_expired_domains();
+    my $expired_domains = $self->{whm}->get_expired_domains();
 
-    if (!grep /^$self->{'domain'}$/i, @expired_domains) {
+    if (!grep /^$self->{'domain'}/i, @{$expired_domains}) {
         $return_vars->{'message'} = "Could not find the domain in expired list";
         return $return_vars;
     }
