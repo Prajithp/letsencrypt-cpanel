@@ -15,3 +15,4 @@ cd letsencrypt-cpanel
 ```
 If everything goes well, you can see an icon in the WHM >> Plugins Section
 
+# Please, do not contact me by email, I won't answer your questions. For developing matters you can open an issue, create a pull request or (in case you think it's necessary) email me.
