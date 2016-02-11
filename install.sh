@@ -6,62 +6,68 @@ if [ ! `id -u` = 0 ]; then
   exit 1;
 fi
 
-foundmodule=$(perl -MProtocol::ACME -e "1" 2>&1)
-if [[ "$foundmodule" != "" ]]; then
-  echo "Protocol::ACME is NOT installed"
-  echo "Installing Protocol::ACME"
-  echo "....."
-  perl -MCPAN -e "install Protocol::ACME" >/dev/null 2>&1
-  echo "....."
-  ismodulethere=$(perl -MProtocol::ACME -e "1" 2>&1)
-  if [[ "$ismodulethere" == "" ]]; then
-    echo "Protocol::ACME is installed properly"
+REQUIREDMODULES=( "Protocol::ACME" "JSON::XS"  "Mozilla::CA" "CGI" "cPanel::PublicAPI" )
+NEEDSCHECK=()
+NOTINSTALLED=()
+ALLINSTALLED=1
+
+PERLRESULT=$( perl -MCGI -e "1" 2>&1)
+if [[ $PERLRESULT != "" ]]; then
+  for i in "${REQUIREDMODULES[@]}"
+  do
+    echo "Installing $i"
     echo "....."
-  else
-    echo "Protocol::ACME is NOT installed"
-    echo "You can try installing these modules by running" 
-    echo "/scripts/perlinstaller Protocol::ACME"
-    exit 1;
-  fi
+    /scripts/perlinstaller "$i" >/dev/null 2>&1
+  done
+else
+  #Otherwise, test each module before install
+  for i in "${REQUIREDMODULES[@]}"
+  do
+    foundmodule=$(perl -M$i -e "1" 2>&1)
+    if [[ "$foundmodule" != "" ]]; then
+      echo "$i is NOT installed"
+      echo "Installing $i"
+      echo "....."
+      /scripts/perlinstaller "$i" >/dev/null 2>&1
+      echo "....."
+      NEEDSCHECK=( "${NEEDSCHECK[@]}" "$i" ) #prevent unset issues with array -1
+    fi
+  done
+fi
+SIZEOFNEEDS=${#NEEDSCHECK[@]}
+if [[ "$SIZEOFNEEDS" -ge "1" ]]; then
+  echo "$GREEN Testing  perl modules we just installed $RESET"
+  echo "....."
+  for i in "${NEEDSCHECK[@]}"
+  do
+    ismodulethere=$(perl -M$i -e "1" 2>&1)
+    if [[ "$ismodulethere" == "" ]]; then
+      echo "$i is installed properly"
+      echo "....."
+    else
+      echo "$i is NOT installed"
+      echo "....."
+      ALLINSTALLED=0
+      NOTINSTALLED=( "${NOTINSTALLED[@]}" "$i" )
+    fi
+  done
 fi
 
-foundmodule=$(perl -MJSON::XS -e "1" 2>&1)
-if [[ "$foundmodule" != "" ]]; then
-  echo "JSON::XS is NOT installed"
-  echo "Installing JSON::XS"
-  echo "....."
-  /scripts/perlinstaller "JSON::XS" >/dev/null 2>&1
-  echo "....."
-  ismodulethere=$(perl -MJSON::XS -e "1" 2>&1)
-  if [[ "$ismodulethere" == "" ]]; then
-    echo "JSON::XS is installed properly"
-    echo "....."
-  else
-    echo "JSON::XS is NOT installed"
-    echo "You can try installing these modules by running" 
-    echo "/scripts/perlinstaller JSON::XS"
-    exit 1;
-  fi
+if [[ "$ALLINSTALLED" != 1 ]]; then
+  echo "There was an error verifying  required perl modules are installed."
+  echo "The following perl modules could not be installed: "
+  for i in "${NOTINSTALLED[@]}"
+  do
+    echo "$i"
+  done
+  echo "You can try installing these modules by running" 
+  echo "/scripts/perlinstaller <module_name>"
+  echo "for each module name listed above."
+  exit 1
+else
+  echo ".....DONE"
 fi
 
-foundmodule=$(perl -McPanel::PublicAPI -e "1" 2>&1)
-if [[ "$foundmodule" != "" ]]; then
-  echo "cPanel::PublicAPI is NOT installed"
-  echo "Installing cPanel::PublicAPI"
-  echo "....."
-  /scripts/perlinstaller "cPanel::PublicAPI" >/dev/null 2>&1
-  echo "....."
-  ismodulethere=$(perl -McPanel::PublicAPI -e "1" 2>&1)
-  if [[ "$ismodulethere" == "" ]]; then
-    echo "cPanel::PublicAPI is installed properly"
-    echo "....."
-  else
-    echo "cPanel::PublicAPI is NOT installed"
-    echo "You can try installing these modules by running" 
-    echo "/scripts/perlinstaller cPanel::PublicAPI"
-    exit 1;
-  fi
-fi
 
 
 test -e "/var/letsencrypt" || mkdir "/var/letsencrypt"
