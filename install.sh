@@ -25,6 +25,26 @@ if [[ "$foundmodule" != "" ]]; then
   fi
 fi
 
+foundmodule=$(perl -MJSON::XS -e "1" 2>&1)
+if [[ "$foundmodule" != "" ]]; then
+  echo "JSON::XS is NOT installed"
+  echo "Installing JSON::XS"
+  echo "....."
+  /scripts/perlinstaller "JSON::XS" >/dev/null 2>&1
+  echo "....."
+  ismodulethere=$(perl -MJSON::XS -e "1" 2>&1)
+  if [[ "$ismodulethere" == "" ]]; then
+    echo "JSON::XS is installed properly"
+    echo "....."
+  else
+    echo "JSON::XS is NOT installed"
+    echo "You can try installing these modules by running" 
+    echo "/scripts/perlinstaller JSON::XS"
+    exit 1;
+  fi
+fi
+
+
 test -e "/var/letsencrypt" || mkdir "/var/letsencrypt"
 test -e "/var/letsencrypt" || mkdir "/var/letsencrypt/conf"
 
