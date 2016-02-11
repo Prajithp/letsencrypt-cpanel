@@ -18,11 +18,14 @@ my $domains = $whm->get_expired_domains;
 
 foreach my $domain (@{$domains}) {
 
-  next if $domain eq 'sip.prajith.in';
-  
-  my $result_ref = Cpanel::LetsEncrypt->new(domain => $domain)->renew_ssl_certificate();
+  my $result_ref; 
+  eval { $result_ref = Cpanel::LetsEncrypt->new(domain => $domain)->renew_ssl_certificate(); };
+ 
+  if ($@) {
+    print {$fh} "Failed to renew SSL certificate for $domain : " . $@ . "\n";
+  }  
 
-  if ( !$result_ref->{status}  ) {
+  if ( !$result_ref->{status} ) {
      print {$fh} "Failed to renew SSL certificate for $domain : " . $result_ref->{message} ? $result_ref->{message} : $@ . "\n";
 
   }
