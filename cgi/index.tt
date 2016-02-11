@@ -86,7 +86,7 @@
             </div>
             <!-- Modal Body -->
             <div class="modal-body">
-             [% IF expired_domains.length > '0' %]
+             [% IF expired_domains.size %]
               <form class="form-horizontal" role="form">
                 <div class="form-group">
                   <label class="col-sm-2 control-label" for="inputdomain3">Domain</label>

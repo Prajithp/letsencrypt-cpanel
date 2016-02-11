@@ -39,6 +39,12 @@ if [[ -x "/usr/local/cpanel/bin/register_appconfig" ]]; then
   test -e "/usr/local/cpanel/whostmgr/docroot/addon_plugins" || mkdir "/usr/local/cpanel/whostmgr/docroot/addon_plugins"
   install -o root -g wheel -m 0644 icons/ico-letsencrypt.svg /usr/local/cpanel/whostmgr/docroot/addon_plugins/ico-letsencrypt.svg
   /usr/local/cpanel/bin/register_appconfig letsencrypt_app.conf
+  cp -r renew_letsencrypt_ssl.pl /scripts/renew_letsencrypt_ssl.pl
+  chmod 700 /scripts/renew_letsencrypt_ssl.pl
+  crontab -l > /tmp/crontab.tmp
+  echo "00 00 * * *  /scripts/renew_letsencrypt_ssl.pl" >> /tmp/crontab.tmp
+  crontab /tmp/crontab.tmp
+  rm -rf /tmp/crontab.tmp
 
   echo -e "\033[40m\033[001;031mSuccessfully installed letsencrypt manager\033[0m"
 else
