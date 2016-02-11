@@ -16,7 +16,7 @@ use Cpanel::OpenSSL                ();
 use Cpanel::LetsEncrypt::WHM       ();
 use Cpanel::LetsEncrypt::Config    ();
 
-our $VERSION = '1.0.0';
+our $VERSION = '1.0.1';
 
 sub new {
     my ($class, %opts) = @_;
@@ -231,10 +231,6 @@ sub _request_for_ssl_cert {
         if ($output_ref->{stderr}) {
             die "Error occured at line number ".  __LINE__ . ': ' . $output_ref->{stderr};
         }
-
-        #unlink($tmp_ca) if -e $tmp_ca;
-        #unlink($der_file) if -e $der_file;
-
     };
 
     if ($@) {
