@@ -44,6 +44,25 @@ if [[ "$foundmodule" != "" ]]; then
   fi
 fi
 
+foundmodule=$(perl -McPanel::PublicAPI -e "1" 2>&1)
+if [[ "$foundmodule" != "" ]]; then
+  echo "cPanel::PublicAPI is NOT installed"
+  echo "Installing cPanel::PublicAPI"
+  echo "....."
+  /scripts/perlinstaller "cPanel::PublicAPI" >/dev/null 2>&1
+  echo "....."
+  ismodulethere=$(perl -McPanel::PublicAPI -e "1" 2>&1)
+  if [[ "$ismodulethere" == "" ]]; then
+    echo "cPanel::PublicAPI is installed properly"
+    echo "....."
+  else
+    echo "cPanel::PublicAPI is NOT installed"
+    echo "You can try installing these modules by running" 
+    echo "/scripts/perlinstaller cPanel::PublicAPI"
+    exit 1;
+  fi
+fi
+
 
 test -e "/var/letsencrypt" || mkdir "/var/letsencrypt"
 test -e "/var/letsencrypt" || mkdir "/var/letsencrypt/conf"
