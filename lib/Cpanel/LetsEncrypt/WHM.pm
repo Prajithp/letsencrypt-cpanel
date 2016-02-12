@@ -123,12 +123,17 @@ sub listaccts {
         push(@domains, $acct->{domain}) unless $ssl_vhosts->{$acct->{domain}};
 
         {
-            my $content       = $self->slurp("/var/cpanel/userdata/$acct->{user}/main");
-            my $subdomain_ref = Cpanel::YAML::Load($content);
-            foreach my $subdomain (@{$subdomain_ref->{sub_domains}}) {
-                next if $ssl_vhosts->{$subdomain};
-                push(@domains, $subdomain);
-            }
+            my $content      = $self->slurp("/var/cpanel/userdata/$acct->{user}/main");
+            my $userdata_ref = Cpanel::YAML::Load($content);
+            my @subdomains   = @{$userdata_ref->{sub_domains}};
+            my @addondomains = keys %{$userdata_ref->{addon_domains}};
+            my @alt_domains  = (@subdomains, @addondomains);         
+
+            foreach my $alt_domain (@alt_domains) {
+                my $main_domain = $self->liveapi_request( 'domainuserdata', { domain => $alt_domain } )->{data}->{userdata}->{servername}; 
+                next if ( $ssl_vhosts->{$alt_domain} or grep /^$alt_domain$/, @{$ssl_vhosts->{$main_domain}->{domains}} );
+                push(@domains, $alt_domain);
+            }             
         }
     }
 

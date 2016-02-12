@@ -48,6 +48,7 @@
             <thead>
               <tr>
                 <th>Domain</th>
+                <th>Alternative Domains</th>
                 <th>Provider</th>
                 <th>Expiry Date</th>
                 <th>Days Left</th>
@@ -61,6 +62,7 @@
                 <tr class="text-info">
               [% END %]
                 <td>[% account %]</td>
+                <td>[% installd_domains.$account.domains.join('</br>') %]</td>
                 <td>[% installd_domains.$account.issuer_organizationName %]</td>
                 <td>[% format_time(installd_domains.$account.not_after) %]</td>
                 <td>[% installd_domains.$account.daysleft %]</td>
