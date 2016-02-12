@@ -6,7 +6,7 @@ if [ ! `id -u` = 0 ]; then
   exit 1;
 fi
 
-REQUIREDMODULES=( "Protocol::ACME" "JSON::XS"  "Mozilla::CA" "CGI" "cPanel::PublicAPI" )
+REQUIREDMODULES=( "Protocol::ACME" "JSON::XS"  "Mozilla::CA" "CGI" "cPanel::PublicAPI" "Template" "YAML::Syck" )
 NEEDSCHECK=()
 NOTINSTALLED=()
 ALLINSTALLED=1
@@ -87,7 +87,7 @@ if [[ -x "/usr/local/cpanel/bin/register_appconfig" ]]; then
   cp -r renew_letsencrypt_ssl.pl /scripts/renew_letsencrypt_ssl.pl
   chmod 700 /scripts/renew_letsencrypt_ssl.pl
   crontab -l > /tmp/crontab.tmp
-  echo "00 00 * * *  /scripts/renew_letsencrypt_ssl.pl" >> /tmp/crontab.tmp
+  echo "00 00 * * *  /scripts/renew_letsencrypt_ssl.pl > /dev/null 2>&1" >> /tmp/crontab.tmp
   crontab /tmp/crontab.tmp
   rm -rf /tmp/crontab.tmp
 
