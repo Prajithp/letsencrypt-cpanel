@@ -65,7 +65,7 @@ sub get_expired_domains {
     my @domains;
     foreach my $ssl_vhost (keys(%{$ssl_vhosts})) {
         if (    $ssl_vhosts->{$ssl_vhost}->{'daysleft'} < '5'
-            and $ssl_vhosts->{$ssl_vhost}->{'issuer_organizationName'} = "Let's Encrypt")
+            and $ssl_vhosts->{$ssl_vhost}->{'issuer_organizationName'} =~ m/Let's\s*Encrypt/i)
         {
             push(@domains, $ssl_vhost);
         }
