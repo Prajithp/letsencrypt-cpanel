@@ -6,7 +6,7 @@ if [ ! `id -u` = 0 ]; then
   exit 1;
 fi
 
-REQUIREDMODULES=( "Protocol::ACME" "JSON::XS"  "Mozilla::CA" "CGI" "cPanel::PublicAPI" "Template" "YAML::Syck" )
+REQUIREDMODULES=( "Protocol::ACME" "JSON::XS"  "Mozilla::CA" "CGI" "cPanel::PublicAPI" "Template" "YAML::Syck" "Net::SSLeay")
 NEEDSCHECK=()
 NOTINSTALLED=()
 ALLINSTALLED=1
@@ -68,7 +68,11 @@ else
   echo ".....DONE"
 fi
 
+Net_SSLeay=$(perl -MNet::SSLeay -e 'print $Net::SSLeay::VERSION');
 
+if [[ "${Net_SSLeay}" < "1.49" ]]; 
+  then /scripts/perlinstaller Net::SSLeay
+fi
 
 test -e "/var/letsencrypt" || mkdir "/var/letsencrypt"
 test -e "/var/letsencrypt" || mkdir "/var/letsencrypt/conf"
