@@ -1,101 +1,146 @@
 #!/usr/bin/perl
 
 use lib '/usr/local/cpanel';
-use Whostmgr::ACLS           ();
-use Cpanel::LetsEncrypt      ();
-use Cpanel::LetsEncrypt::WHM ();
-use JSON                     ();
-use CGI                      ();
+use Whostmgr::ACLS               ();
+use Cpanel::LetsEncrypt          ();
+use Cpanel::LetsEncrypt::WHM     ();
+use Cpanel::LetsEncrypt::Service ();
+use JSON                         ();
+use CGI                          ();
 use Template;
+use Data::Dumper;
 
 Whostmgr::ACLS::init_acls();
 
 my $cgi = CGI->new();
 
 if (!Whostmgr::ACLS::hasroot()) {
-  print $cgi->header('application/text', '400 Bad request');
-  print 'Access denied';
-  exit 1;
+    print $cgi->header('application/text', '400 Bad request');
+    print 'Access denied';
+    exit 1;
 }
 
-my $cP_Datas = {SECURITY_TOKEN => $ENV{cp_security_token}, WHM_USER => $ENV{REMOTE_USER}, WHM_PASS => $ENV{REMOTE_PASSWORD}, HOST => $ENV{HTTP_HOST},};
-
-my $whm         = Cpanel::LetsEncrypt::WHM->new();
-
-my $vars = {
-  'message'          => undef,
-  'status'           => 'success',
-  'version'          => $Cpanel::LetsEncrypt::VERSION,
-  'installd_domains' => $whm->fetch_installed_ssl_info(),
-  'domains'          => $whm->listaccts(),
-  'expired_domains'  => $whm->get_expired_domains,
-  'format_time'      => sub { return scalar localtime(shift) },
+my $cP_Datas = {
+    SECURITY_TOKEN => $ENV{cp_security_token},
+    WHM_USER       => $ENV{REMOTE_USER},
+    WHM_PASS       => $ENV{REMOTE_PASSWORD},
+    HOST           => $ENV{HTTP_HOST},
 };
 
-my $action = $cgi->param('action');
-my $domain = _sanitize($cgi->param('domain'));
+my $whm = Cpanel::LetsEncrypt::WHM->new();
 
-my $letsencrypt = Cpanel::LetsEncrypt->new(domain => $domain) if ( defined $domain && defined $action );
+my $vars = {
+    'message'          => undef,
+    'status'           => 'success',
+    'version'          => $Cpanel::LetsEncrypt::VERSION,
+    'installd_domains' => $whm->fetch_installed_ssl_info(),
+    'domains'          => $whm->listaccts(),
+    'expired_domains'  => $whm->get_expired_domains,
+    'format_time'      => sub { return scalar localtime(shift) },
+};
+
+my $action   = $cgi->param('action');
+my $domain   = _sanitize($cgi->param('domain'));
+my @services = $cgi->param('services[]');
+
+my $letsencrypt = Cpanel::LetsEncrypt->new(domain => $domain)
+    if ($domain && defined $action and _ ne 'service');
 
 if ($action eq 'renew' and defined $domain) {
 
-  my $result_ref = $letsencrypt->renew_ssl_certificate();
+    my $result_ref = $letsencrypt->renew_ssl_certificate();
 
-  unless ($result_ref->{status}) {
-    $vars->{status} = 'danger';
-    $vars->{message} = $result_ref->{message} ? $result_ref->{message} : 'Something went wrong, kindly check the letsencrypt log file';
+    unless ($result_ref->{status}) {
+        $vars->{status} = 'danger';
+        $vars->{message} =
+              $result_ref->{message}
+            ? $result_ref->{message}
+            : 'Something went wrong, kindly check the letsencrypt log file';
+
+        print $cgi->header();
+        build_template('index.tt', $vars);
+        exit 0;
+    }
+
+    $vars->{message} = $result_ref->{message};
 
     print $cgi->header();
     build_template('index.tt', $vars);
     exit 0;
-  }
-
-  $vars->{message} = $result_ref->{message};
-
-  print $cgi->header();
-  build_template('index.tt', $vars);
-  exit 0;
 }
 elsif ($action eq 'install' and defined $domain) {
 
-  my $result_ref = $letsencrypt->activate_ssl_certificate();
+    my $result_ref = $letsencrypt->activate_ssl_certificate();
 
-  unless ($result_ref->{status}) {
-    $vars->{status} = 'danger';
-    $vars->{message} = $result_ref->{message} ? $result_ref->{message} : 'Something went wrong, kindly check the letsencrypt log file';
+    unless ($result_ref->{status}) {
+        $vars->{status} = 'danger';
+        $vars->{message} =
+              $result_ref->{message}
+            ? $result_ref->{message}
+            : 'Something went wrong, kindly check the letsencrypt log file';
+
+        print $cgi->header();
+        build_template('index.tt', $vars);
+        exit 0;
+    }
+
+    $vars->{message} = $result_ref->{message};
 
     print $cgi->header();
     build_template('index.tt', $vars);
     exit 0;
-  }
+}
+elsif ($action eq 'service') {
+    my $ssl_for_services = Cpanel::LetsEncrypt::Service->new();
 
-  $vars->{message} = $result_ref->{message};
+    my $output_ref = $ssl_for_services->get_certificate();
+    if (!$output_ref->{success}) {
+        $vars->{status}  = 'danger';
+        $vars->{message} = $output_ref->{message};
 
-  print $cgi->header();
-  build_template('index.tt', $vars);
-  exit 0;
+        print $cgi->header();
+        build_template('index.tt', $vars);
+        exit 0;
+    }
+   
+    print STDERR Dumper @services; 
+    my ($ok, $message) = $ssl_for_services->install_cert_for_service(\@services);
+    if (!$ok) {
+       $vars->{status}  = 'danger';
+       $vars->{message} = $message;
+   
+       print $cgi->header();
+       build_template('index.tt', $vars);
+       exit 0;
+    }
+
+    $vars->{message} = "Installed certificate for cPanel/WHM services, please restart 'cpsrvd' daemon using '/scripts/restartsrv_cpsrvd'";
+    print $cgi->header();
+    build_template('index.tt', $vars);
+    exit 0;
 }
 else {
-  $vars->{status} = undef;
-  print $cgi->header();
-  build_template('index.tt', $vars);
-  exit 0;
+    $vars->{status} = undef;
+    print $cgi->header();
+    build_template('index.tt', $vars);
+    exit 0;
 
 }
 
 sub build_template {
-  my ($file, $vars_ref) = @_;
+    my ($file, $vars_ref) = @_;
 
-  my $template = Template->new({INCLUDE_PATH => '/usr/local/cpanel/whostmgr/docroot/cgi/letsencrypt',});
+    my $template =
+        Template->new({INCLUDE_PATH => '/usr/local/cpanel/whostmgr/docroot/cgi/letsencrypt',});
 
-  $template->process($file, $vars_ref) || die 'Template-error: ' . $template->error();
+    $template->process($file, $vars_ref) || die 'Template-error: ' . $template->error();
 
 }
 
 # copied from cPanel ip-manager plugin;
 sub _sanitize {    #Sanitize input field input
-  my $text = shift;
-  return '' if !$text;
-  $text =~ s/([;<>\*\|`&\$!?#\(\)\[\]\{\}:'"\\])/\\$1/g;
-  return $text;
+    my $text = shift;
+    return '' if !$text;
+    $text =~ s/([;<>\*\|`&\$!?#\(\)\[\]\{\}:'"\\])/\\$1/g;
+    return $text;
 }

@@ -61,13 +61,19 @@ sub handle {
     my $fh = IO::Handle->new();
 
     my $lock;
-    Cpanel::AccessIds::ReducedPrivileges::call_as_user(
-        sub {
-            File::Path::mkpath($dir) unless -e $dir;
-            $lock = Cpanel::SafeFile::safeopen($fh, '>', $file);
-        },
-        $self->{user}
-    );
+    if ( defined $self->{'user'} and $self->{'user'} ne 'root' ) {
+        Cpanel::AccessIds::ReducedPrivileges::call_as_user(
+            sub {
+                File::Path::mkpath($dir) unless -e $dir;
+                $lock = Cpanel::SafeFile::safeopen($fh, '>', $file);
+            },
+            $self->{user}
+        );
+    }
+    else {
+        File::Path::mkpath($dir) unless -e $dir;
+        $lock = Cpanel::SafeFile::safeopen($fh, '>', $file);
+    }
 
     unless (defined $lock) {
         croak "Unable to lock/open '$file': $!";

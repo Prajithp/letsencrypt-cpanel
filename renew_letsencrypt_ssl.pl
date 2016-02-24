@@ -7,12 +7,16 @@ BEGIN {
 
 use Cpanel::LetsEncrypt;
 use Cpanel::LetsEncrypt::WHM;
+use Cpanel::LetsEncrypt::Service;
 
 my $log_file = '/var/letsencrypt/letsencrypt.log';
 
 open my $fh, '>>', $log_file;
 
 my $whm = Cpanel::LetsEncrypt::WHM->new();
+my $service = Cpanel::LetsEncrypt::Service->new();
+
+my @services = ('exim', 'dovecot', 'cpanel', 'ftp');
 
 my $domains = $whm->get_expired_domains;
 
@@ -29,6 +33,11 @@ foreach my $domain (@{$domains}) {
      print {$fh} "Failed to renew SSL certificate for $domain : " . $result_ref->{message} ? $result_ref->{message} : $@ . "\n";
 
   }
+}
+
+eval { $service->check_for_expiry; };
+if ($@) {
+    print {$fh} "Failed to renew SSL certificate for hostname : " . $@ . "\n";
 }
 
 close($fh);
