@@ -1,5 +1,5 @@
 ## letsencrypt-cpanel
-This is a cPanel/WHM plugin for the [Let's Encrypt] client. This plugin uses Perl and the WHM API, and requires a server running cPanel and WHM on it.
+This is a cPanel/WHM plugin for the [Let's Encrypt](https://letsencrypt.org/) client. This plugin uses Perl and the WHM API, and requires a server running cPanel and WHM on it.
 
 Support for service SSL certificates has been recently added, and is considered to be in beta. Please report any issues you find so that we may address them.
 
