@@ -122,10 +122,10 @@ sub listaccts {
     foreach my $acct (@{$accounts_ref->{acct}}) {
         push(@domains, $acct->{domain}) unless $ssl_vhosts->{$acct->{domain}};
 
-        {
+        eval {
             my $content      = $self->slurp("/var/cpanel/userdata/$acct->{user}/main");
             my $userdata_ref = Cpanel::YAML::Load($content);
-            my @subdomains   = @{$userdata_ref->{sub_domains}};
+            my @subdomains   = @{$userdata_ref->{sub_domains}} if ref $userdata_ref->{sub_domains} eq 'ARRAY';
             my @addondomains = keys %{$userdata_ref->{addon_domains}};
             my @alt_domains  = (@subdomains, @addondomains);         
 
@@ -134,7 +134,7 @@ sub listaccts {
                 next if ( $ssl_vhosts->{$alt_domain} or grep /^$alt_domain$/, @{$ssl_vhosts->{$main_domain}->{domains}} );
                 push(@domains, $alt_domain);
             }             
-        }
+        };
     }
 
     return \@domains;

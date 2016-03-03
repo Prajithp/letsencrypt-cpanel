@@ -84,6 +84,8 @@ elsif ($action eq 'install' and defined $domain) {
         exit 0;
     }
 
+    $vars->{'installd_domains'} = $whm->fetch_installed_ssl_info();
+    $vars->{'domains'} =  $whm->listaccts();
     $vars->{message} = $result_ref->{message};
 
     print $cgi->header();

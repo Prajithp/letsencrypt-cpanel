@@ -38,6 +38,10 @@ sub _resolve_file_location {
 
     my $hostname = $self->_get_hostname();
 
+    for my $parrent_dir ( $self->{'work_dir'}, $self->{'hostname_dir'}, $self->{'accounts'} ) {
+        mkdir($parrent_dir, 0700) or die unless -d $parrent_dir;
+    }
+
     my $dir = $self->{hostname_dir} . '/' . $self->{'domain'};
     if (!-d $dir) {
         mkdir($dir, 0700) or die $!;

@@ -16,7 +16,7 @@ use Cpanel::OpenSSL                ();
 use Cpanel::LetsEncrypt::WHM       ();
 use Cpanel::LetsEncrypt::Config    ();
 
-our $VERSION = '1.0.1';
+our $VERSION = '1.1.0';
 
 sub new {
     my ($class, %opts) = @_;
