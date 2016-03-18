@@ -210,7 +210,7 @@ sub _request_for_ssl_cert {
     }
 
     my $acme = Protocol::ACME->new(
-        host        => 'acme-staging.api.letsencrypt.org',
+        host        => 'acme-v01.api.letsencrypt.org',
         loglevel    => 'error',
         debug       => 0,
         account_key => \$account_key,
