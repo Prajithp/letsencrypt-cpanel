@@ -1,6 +1,9 @@
-#!/usr/bin/perl
+#!/usr/local/cpanel/3rdparty/bin/perl
 
-use lib '/usr/local/cpanel';
+BEGIN {
+    unshift @INC, q{/usr/local/cpanel/base/3rdparty/letsencrypt-cpanel-ui/lib/perl5};
+};
+
 use Whostmgr::ACLS               ();
 use Cpanel::LetsEncrypt          ();
 use Cpanel::LetsEncrypt::WHM     ();
@@ -9,6 +12,8 @@ use JSON                         ();
 use CGI                          ();
 use Template;
 use Data::Dumper;
+
+$CGI::LIST_CONTEXT_WARN = 0;
 
 Whostmgr::ACLS::init_acls();
 
@@ -39,8 +44,8 @@ my $vars = {
     'format_time'      => sub { return scalar localtime(shift) },
 };
 
-my $action   = $cgi->param('action');
-my $domain   = _sanitize($cgi->param('domain'));
+my $action   = scalar $cgi->param('action');
+my $domain   = _sanitize(scalar $cgi->param('domain'));
 my @services = $cgi->param('services[]');
 
 my $letsencrypt = Cpanel::LetsEncrypt->new(domain => $domain)
@@ -84,6 +89,8 @@ elsif ($action eq 'install' and defined $domain) {
         exit 0;
     }
 
+    $vars->{'installd_domains'} = $whm->fetch_installed_ssl_info();
+    $vars->{'domains'} =  $whm->listaccts();
     $vars->{message} = $result_ref->{message};
 
     print $cgi->header();
@@ -103,7 +110,6 @@ elsif ($action eq 'service') {
         exit 0;
     }
    
-    print STDERR Dumper @services; 
     my ($ok, $message) = $ssl_for_services->install_cert_for_service(\@services);
     if (!$ok) {
        $vars->{status}  = 'danger';

@@ -1,8 +1,5 @@
 package Cpanel::LetsEncrypt;
 
-BEGIN {
-    unshift @INC, q{/usr/local/cpanel};
-}
 
 use strict;
 use JSON                           ();
@@ -137,13 +134,37 @@ sub renew_ssl_certificate {
     }
 
     my $config_file = $self->{'config_dir'} . '/' . $self->{'domain'} . '.json';
-    if (!-e $config_file) {
-        $return_vars->{'message'} =
-"Could not find the domain config file, please revoke the ssl cert and install it again";
-        return $return_vars;
-    }
+    my $hash;
 
-    my $hash   = $self->read_as_hash($config_file);
+    if (!-e $config_file) {
+        my $json_resp     = $self->{whm}->get_domain_userdata($self->{domain});
+        my $contact_email = $self->{whm}->get_email_by_domain($self->{domain});
+
+        if (!$contact_email) {
+            $return_vars->{'message'} = "Update the domain owner email id in whm first";
+            return $return_vars;
+        }
+
+        my $aliases = $json_resp->{serveralias};
+        $aliases =~ s/\s+/\,/g;
+
+        $hash = {
+            'rsa-key-size'     => '4096',
+            'authenticator'    => 'webroot',
+            'webroot-path'     => $json_resp->{documentroot},
+            'server'           => 'https://acme-v01.api.letsencrypt.org/directory',
+            'renew-by-default' => 'True',
+            'agree-tos'        => 'True',
+            'ip_address'       => $json_resp->{ip},
+            'email'            => $contact_email,
+            'domains'          => "$self->{domain}, $aliases",
+            'domain'           => $self->{domain},
+            'username'         => $json_resp->{user},
+        };       
+    }
+    else {
+        $hash   = $self->read_as_hash($config_file);
+    }
     my $status = $self->_request_for_ssl_cert($hash);
 
     if (!$status->{'success'}) {
@@ -189,7 +210,7 @@ sub _request_for_ssl_cert {
     }
 
     my $acme = Protocol::ACME->new(
-        host        => 'acme-v01.api.letsencrypt.org',
+        host        => 'acme-staging.api.letsencrypt.org',
         loglevel    => 'error',
         debug       => 0,
         account_key => \$account_key,

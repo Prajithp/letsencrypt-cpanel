@@ -3,10 +3,6 @@ package Cpanel::LetsEncrypt::Challenge;
 use strict;
 use warnings;
 
-BEGIN {
-    unshift @INC, q{/usr/local/cpanel};
-}
-
 use parent qw ( Protocol::ACME::Challenge );
 use Carp;
 
@@ -62,19 +58,24 @@ sub handle {
 
     my $lock;
     if ( defined $self->{'user'} and $self->{'user'} ne 'root' ) {
-        Cpanel::AccessIds::ReducedPrivileges::call_as_user(
-            sub {
-                File::Path::mkpath($dir) unless -e $dir;
-                $lock = Cpanel::SafeFile::safeopen($fh, '>', $file);
-            },
-            $self->{user}
-        );
+        if (( defined $ENV{'REMOTE_USER'} and $ENV{'REMOTE_USER'} eq 'root') || (defined $ENV{'USER'} and $ENV{'USER'} eq 'root')) {
+            Cpanel::AccessIds::ReducedPrivileges::call_as_user(
+                sub {
+                    File::Path::mkpath($dir) unless -e $dir;
+                    $lock = Cpanel::SafeFile::safeopen($fh, '>', $file);
+                },
+                $self->{user}
+            );
+        }
+        else {
+            File::Path::mkpath($dir) unless -e $dir;
+            $lock = Cpanel::SafeFile::safeopen($fh, '>', $file);
+        }
     }
     else {
         File::Path::mkpath($dir) unless -e $dir;
         $lock = Cpanel::SafeFile::safeopen($fh, '>', $file);
     }
-
     unless (defined $lock) {
         croak "Unable to lock/open '$file': $!";
     }

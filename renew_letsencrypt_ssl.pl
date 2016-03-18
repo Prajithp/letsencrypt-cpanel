@@ -1,7 +1,7 @@
-#!/usr/bin/perl
+#!/usr/local/cpanel/3rdparty/bin/perl
 
 BEGIN {
-    unshift @INC, q{/usr/local/cpanel};
+    unshift @INC, q{/usr/local/cpanel/base/3rdparty/letsencrypt-cpanel-ui/lib/perl5};
 };
 
 

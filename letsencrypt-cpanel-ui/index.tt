@@ -9,7 +9,8 @@
   <!-- Bootstrap -->
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css">
-
+  <style type="text/css">.page-header {border: 0;}</style>
+  <style type="text/css">.navbar-brand>img { display: -moz-inline-stack; }</style>
   <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
   <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
   <!--[if lt IE 9]>
@@ -33,10 +34,6 @@
         <div class="panel-heading clearfix">
           <strong>SSL enabled Vhosts</strong>
           <div class="btn pull-right">
-            <a href="#" class="btn btn-success btn-mini" data-toggle="modal" data-target="#service">
-              <span class="fa fa-chain fa-sm"></span>
-              Install letsencrypt on whm services
-            </a>
             <a href="#" class="btn btn-info btn-mini" data-toggle="modal" data-target="#install">
               <span class="fa fa-chain fa-sm"></span>
               Install letsencrypt SSL Cert
@@ -73,43 +70,6 @@
         </div>
       </div>
       <!-- Modal -->
-      <div class="modal fade" id="service" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-          <div class="modal-content">
-            <!-- Modal Header -->
-            <div class="modal-header">
-              <button type="button" class="close" data-dismiss="modal">
-                <span aria-hidden="true">&times;</span>
-                <span class="sr-only">Close</span>
-              </button>
-              <h4 class="modal-title" id="myModalLabel">
-                Install certificate on whm/cpanel/webmail services 
-              </h4>
-            </div>
-            <!-- Modal Body -->
-            <div class="modal-body">
-              <form class="form-horizontal" role="form">
-                <div class="form-group">
-                  <label class="col-sm-2 control-label" for="inputdomain3">Services</label>
-                  <div class="col-sm-10">
-                      <label class="checkbox-inline"><input type="checkbox" name="services[]" value="cpanel">WHM/cPanel</label>
-                      <label class="checkbox-inline"><input type="checkbox" name="services[]" value="exim">Exim</label>
-                      <label class="checkbox-inline"><input type="checkbox" name="services[]" value="ftp">FTP</label>
-                      <label class="checkbox-inline"><input type="checkbox" name="services[]" value="dovecot">Dovecot</label>
-                  </div>
-                   <input type="hidden" name="action" value="service">
-                </div>
-                <div class="form-group">
-                  <div class="col-sm-offset-2 col-sm-10">
-                    <button type="submit" class="btn btn-default">Submit</button>
-                  </div>
-                </div>
-              </form>
-            </div>
-          </div>
-        </div>
-      </div>  
-      <!-- Modal -->
       <div class="modal fade" id="install" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
         <div class="modal-dialog">
           <div class="modal-content">
@@ -125,7 +85,7 @@
             </div>
             <!-- Modal Body -->
             <div class="modal-body">
-              <form class="form-horizontal" role="form">
+              <form class="form-horizontal" method="POST" role="form">
                 <div class="form-group">
                   <label class="col-sm-2 control-label" for="inputdomain3">Domain</label>
                   <div class="col-sm-10">
@@ -164,5 +124,27 @@
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
   <!-- Include all compiled plugins (below), or include individual files as needed -->
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+  [% IF (theme == 'paper_lantern') %]
+    <script type="text/javascript">
+        $("#lnkHeaderHome").prop("href", "[% base_url %]index.html");
+        $("#lnkQuickHome").prop("href", "[% base_url %]index.html");
+        $("#lnkQuickDomains").prop("href", "[% base_url %]addon/index.html");
+        $("#lnkQuickFilemgr").prop("href", "[% base_url %]filemanager/index.html?showhidden=1&dir=/public_html");
+        $("#lnkQuickEmail").prop("href",   "[% base_url %]mail/pops.html");
+        $("#lnkUserPrefChangePwd").prop("href", "[% base_url %]passwd/index.html");
+        $("#lnkUserPrefChangeLang").prop("href", "[% base_url %]setlang/index.html");
+        $("#lnkUserPrefChangeStyle").prop("href", "[% base_url %]styleswitcher/index.html");
+        $("#lnkUserPrefUpdateContactInfo").prop("href", "[% base_url %]contact/index.html");
+        $("#lnkFooterHome").prop("href", "[% base_url %]index.html");
+        $("#lnkFooterTrademark").prop("href", "[% base_url %]trademarks.html");
+        $("#lnkFooterContact").prop("href", "[% base_url %]contact/contactinfo.html");
+        $("#lnkMenu").prop("href", "[% base_url %]index.html");
+        $("#lnkStats").prop("href", "[% base_url %]home/statistics.html");
+        $("#lnkDashboard").prop("href", "[% base_url %]home/dashboard.html");
+        $("#lnkHeaderNotifications").prop("href", "[% base_url %]home/notifications.html.tt");
+        $("#lnkUserManager").prop("href", "[% base_url %]user_manager/index.html");
+        $("#icon-").html('<img src="img/icon.png" alt="" />');                
+   </script>
+ [% END %]
 </body>
 </html>

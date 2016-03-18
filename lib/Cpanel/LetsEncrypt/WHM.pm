@@ -61,10 +61,9 @@ sub get_expired_domains {
     my $self = shift;
 
     my $ssl_vhosts = $self->fetch_installed_ssl_info;
-
     my @domains;
     foreach my $ssl_vhost (keys(%{$ssl_vhosts})) {
-        if (    $ssl_vhosts->{$ssl_vhost}->{'daysleft'} < '5'
+        if ( $ssl_vhosts->{$ssl_vhost}->{'daysleft'} < '23'
             and $ssl_vhosts->{$ssl_vhost}->{'issuer_organizationName'} =~ m/Let's\s*Encrypt/i)
         {
             push(@domains, $ssl_vhost);
@@ -122,10 +121,11 @@ sub listaccts {
     foreach my $acct (@{$accounts_ref->{acct}}) {
         push(@domains, $acct->{domain}) unless $ssl_vhosts->{$acct->{domain}};
 
-        {
+        eval {
             my $content      = $self->slurp("/var/cpanel/userdata/$acct->{user}/main");
             my $userdata_ref = Cpanel::YAML::Load($content);
-            my @subdomains   = @{$userdata_ref->{sub_domains}};
+            my @subdomains;
+            @subdomains      = @{$userdata_ref->{sub_domains}} if ref $userdata_ref->{sub_domains} eq 'ARRAY';
             my @addondomains = keys %{$userdata_ref->{addon_domains}};
             my @alt_domains  = (@subdomains, @addondomains);         
 
@@ -134,7 +134,7 @@ sub listaccts {
                 next if ( $ssl_vhosts->{$alt_domain} or grep /^$alt_domain$/, @{$ssl_vhosts->{$main_domain}->{domains}} );
                 push(@domains, $alt_domain);
             }             
-        }
+        };
     }
 
     return \@domains;
