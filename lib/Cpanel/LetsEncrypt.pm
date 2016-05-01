@@ -245,12 +245,12 @@ sub _request_for_ssl_cert {
       
         my $conver_ca_output_ref = $self->_convert_to_crt($tmp_ca, $ca_file);
         if ($conver_ca_output_ref->{stderr}) {
-            die  "Error occured at line number ".  __LINE__ . ': ' . $conver_ca_output_ref->{stderr};
+            die  "Error occurred at line number ".  __LINE__ . ': ' . $conver_ca_output_ref->{stderr};
         }
 
         my $output_ref = $self->_convert_to_crt($der_file, $cert_file);
         if ($output_ref->{stderr}) {
-            die "Error occured at line number ".  __LINE__ . ': ' . $output_ref->{stderr};
+            die "Error occurred at line number ".  __LINE__ . ': ' . $output_ref->{stderr};
         }
     };
 
@@ -260,7 +260,7 @@ sub _request_for_ssl_cert {
         }
         else {
             $result_hash->{message} =
-                "Error occured: Status: $@->{status}, Detail: $@->{detail}, Type: $@->{type}\n";
+                "Error occurred: Status: $@->{status}, Detail: $@->{detail}, Type: $@->{type}\n";
         }
         $result_hash->{success} = '0';
 
