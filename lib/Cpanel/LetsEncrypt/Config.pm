@@ -4,11 +4,11 @@ use strict;
 use File::Temp;
 
 sub get_tmp_ssl_conf {
-    my ($class, $hash) = @_;
+    my ( $class, $hash ) = @_;
 
     my $domain  = $hash->{domain};
-    my @SAN     = map { "DNS:$_" } split(/,/, $hash->{domains});
-    my $domains = join(',', @SAN);
+    my @SAN     = map {"DNS:$_"} split( /,/, $hash->{domains} );
+    my $domains = join( ',', @SAN );
 
     chomp($domain);
 
@@ -25,10 +25,10 @@ subjectAltName            = \@alt_names
 [SAN]
 subjectAltName            = $domains";
 
-    my $tmp_file = File::Temp->new(UNLINK => 0, SUFFIX => '.conf');
+    my $tmp_file = File::Temp->new( UNLINK => 0, SUFFIX => '.conf' );
     my $fname = $tmp_file->filename;
 
-    open(my $fh, '>', $fname) or die $!;
+    open( my $fh, '>', $fname ) or die $!;
     print {$fh} $content;
     close($fh);
 

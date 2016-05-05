@@ -1,6 +1,5 @@
 package Cpanel::LetsEncrypt;
 
-
 use strict;
 use JSON                           ();
 use IPC::Open3                     ();
@@ -16,13 +15,13 @@ use Cpanel::LetsEncrypt::Config    ();
 our $VERSION = '1.0.1';
 
 sub new {
-    my ($class, %opts) = @_;
+    my ( $class, %opts ) = @_;
 
     my $self = {%opts};
 
-    die "you must provide atleast one domain name" if (!$self->{domain});
+    die "you must provide atleast one domain name" if ( !$self->{domain} );
 
-    bless($self, $class);
+    bless( $self, $class );
 
     $self->_init;
 
@@ -35,16 +34,15 @@ sub _init {
     $self->{openssl} = Cpanel::OpenSSL->new();
     $self->{whm}     = Cpanel::LetsEncrypt::WHM->new();
 
-    my $domainuserdata = $self->{whm}->get_domain_userdata($self->{domain});
+    my $domainuserdata = $self->{whm}->get_domain_userdata( $self->{domain} );
 
     die "Could not find username of this domain '$self->{domain}'" unless $domainuserdata->{user};
 
     $self->{work_dir}   = '/var/letsencrypt';
-    $self->{config_dir} = $self->{work_dir} . '/conf';
     $self->{domain_dir} = $self->{work_dir} . '/live';
     $self->{accounts}   = $self->{work_dir} . '/accounts';
 
-    for my $dir ($self->{work_dir}, $self->{config_dir}, $self->{domain_dir}, $self->{accounts}) {
+    for my $dir ( $self->{work_dir}, $self->{domain_dir}, $self->{accounts} ) {
         mkdir $dir unless -d $dir;
     }
 
@@ -55,60 +53,46 @@ sub activate_ssl_certificate {
 
     my $return_vars = _get_default_output_hash();
 
-    if (!$self->{'domain'}) {
+    if ( !$self->{'domain'} ) {
         $return_vars->{'message'} = "You must provide atleast one domain name";
         return $return_vars;
     }
 
-    if ($self->has_active_ssl_cert) {
+    if ( $self->has_active_ssl_cert ) {
         $return_vars->{'message'} =
             "The domain $self->{domain} is already having an active ssl certificate";
         return $return_vars;
     }
 
-    my $json_resp     = $self->{whm}->get_domain_userdata($self->{domain});
-    my $contact_email = $self->{whm}->get_email_by_domain($self->{domain});
-
-    if (!$contact_email) {
-        $return_vars->{'message'} = "Update the domain owner email id in whm first";
-        return $return_vars;
-    }
+    my $json_resp = $self->{whm}->get_domain_userdata( $self->{domain} );
 
     my $aliases = $json_resp->{serveralias};
     $aliases =~ s/\s+/\,/g;
 
     my $hash = {
-        'rsa-key-size'     => '4096',
-        'authenticator'    => 'webroot',
-        'webroot-path'     => $json_resp->{documentroot},
-        'server'           => 'https://acme-v01.api.letsencrypt.org/directory',
-        'renew-by-default' => 'True',
-        'agree-tos'        => 'True',
-        'ip_address'       => $json_resp->{ip},
-        'email'            => $contact_email,
-        'domains'          => "$self->{domain}, $aliases",
-        'domain'           => $self->{domain},
-        'username'         => $json_resp->{user},
+        'webroot-path' => $json_resp->{documentroot},
+        'ip_address'   => $json_resp->{ip},
+        'domains'      => "$self->{domain}, $aliases",
+        'domain'       => $self->{domain},
+        'username'     => $json_resp->{user},
     };
 
     my $status = $self->_request_for_ssl_cert($hash);
 
     if ( !$status->{'success'} ) {
         $return_vars->{'message'} = $status->{'message'};
-        return  $return_vars;
+        return $return_vars;
     }
 
-    my ($ok, $message) = $self->{whm}->install_ssl_certificate($hash);
+    my ( $ok, $message ) = $self->{whm}->install_ssl_certificate($hash);
 
-    if (!$ok) {
+    if ( !$ok ) {
         $return_vars->{'message'} =
               $message
             ? $message
             : "cPanel SSL installation failed, please check the log file for more info";
         return $return_vars;
     }
-
-    $self->store_as_json($hash);
 
     $return_vars->{'status'}  = '1';
     $return_vars->{'message'} = 'Successfully installed ssl certificate';
@@ -121,68 +105,45 @@ sub renew_ssl_certificate {
 
     my $return_vars = _get_default_output_hash();
 
-    if (!$self->{'domain'}) {
+    if ( !$self->{'domain'} ) {
         $return_vars->{'message'} = "You must provide atleast one domain name";
         return $return_vars;
     }
 
     my $expired_domains = $self->{whm}->get_expired_domains();
 
-    if (!grep /^$self->{'domain'}/i, @{$expired_domains}) {
+    if ( !grep /^$self->{'domain'}/i, @{$expired_domains} ) {
         $return_vars->{'message'} = "Could not find the domain in expired list";
         return $return_vars;
     }
 
-    my $config_file = $self->{'config_dir'} . '/' . $self->{'domain'} . '.json';
     my $hash;
-
-    if (!-e $config_file) {
-        my $json_resp     = $self->{whm}->get_domain_userdata($self->{domain});
-        my $contact_email = $self->{whm}->get_email_by_domain($self->{domain});
-
-        if (!$contact_email) {
-            $return_vars->{'message'} = "Update the domain owner email id in whm first";
-            return $return_vars;
-        }
-
-        my $aliases = $json_resp->{serveralias};
-        $aliases =~ s/\s+/\,/g;
-
-        $hash = {
-            'rsa-key-size'     => '4096',
-            'authenticator'    => 'webroot',
-            'webroot-path'     => $json_resp->{documentroot},
-            'server'           => 'https://acme-v01.api.letsencrypt.org/directory',
-            'renew-by-default' => 'True',
-            'agree-tos'        => 'True',
-            'ip_address'       => $json_resp->{ip},
-            'email'            => $contact_email,
-            'domains'          => "$self->{domain}, $aliases",
-            'domain'           => $self->{domain},
-            'username'         => $json_resp->{user},
-        };       
-    }
-    else {
-        $hash   = $self->read_as_hash($config_file);
-    }
+    my $json_resp = $self->{whm}->get_domain_userdata( $self->{domain} );
+    my $aliases   = $json_resp->{serveralias};
+    $aliases =~ s/\s+/\,/g;
+    $hash = {
+        'webroot-path' => $json_resp->{documentroot},
+        'ip_address'   => $json_resp->{ip},
+        'domains'      => "$self->{domain}, $aliases",
+        'domain'       => $self->{domain},
+        'username'     => $json_resp->{user},
+    };
     my $status = $self->_request_for_ssl_cert($hash);
 
-    if (!$status->{'success'}) {
+    if ( !$status->{'success'} ) {
         $return_vars->{'message'} = $status->{'message'};
         return $return_vars;
     }
 
-    my ($ok, $message) = $self->{whm}->install_ssl_certificate($hash);
+    my ( $ok, $message ) = $self->{whm}->install_ssl_certificate($hash);
 
-    if (!$ok) {
+    if ( !$ok ) {
         $return_vars->{'message'} =
               $message
             ? $message
             : "cPanel SSL installation failed, please check the log file for more info";
         return $return_vars;
     }
-
-    $self->store_as_json($hash);
 
     $return_vars->{'status'} = '1';
     $return_vars->{'message'} = $message ? $message : 'Successfully installed ssl certificate';
@@ -191,17 +152,17 @@ sub renew_ssl_certificate {
 }
 
 sub _request_for_ssl_cert {
-    my ($self, $hash) = @_;
+    my ( $self, $hash ) = @_;
 
-    my $result_hash = {'message' => '', 'success' => '0',};
+    my $result_hash = { 'message' => '', 'success' => '0', };
 
-    my $account_key = $self->create_account_key($hash->{email});
+    my $account_key = $self->create_account_key( $hash->{email} );
     my $csr_file    = $self->_create_csr($hash);
- 
-    my $ca_file     = $self->_resolve_file_location()->{'ca'};
-    my $cert_file   = $self->_resolve_file_location()->{'cert'};
 
-    if (!-e $csr_file) {
+    my $ca_file   = $self->_resolve_file_location()->{'ca'};
+    my $cert_file = $self->_resolve_file_location()->{'cert'};
+
+    if ( !-e $csr_file ) {
         $result_hash->{success} = '0';
         $result_hash->{message} =
             $csr_file->{message} ? $csr_file->{message} : "Could not create csr file";
@@ -215,7 +176,7 @@ sub _request_for_ssl_cert {
         debug       => 0,
         account_key => \$account_key,
     );
- 
+
     my $der_file = $self->_resolve_file_location()->{'cert_der'};
     my $tmp_ca   = $self->_resolve_file_location()->{'ca_der'};
 
@@ -224,14 +185,14 @@ sub _request_for_ssl_cert {
         $acme->register();
         $acme->accept_tos();
 
-        my @domains = split(/,/, $hash->{domains});
+        my @domains = split( /,/, $hash->{domains} );
 
         foreach my $domain (@domains) {
             $domain =~ s/^\s+|\s+$//g;
             $acme->authz($domain);
             $acme->handle_challenge(
                 Cpanel::LetsEncrypt::Challenge->new(
-                    {documentroot => $hash->{'webroot-path'}, user => $hash->{username}}
+                    { documentroot => $hash->{'webroot-path'}, user => $hash->{username} }
                 )
             );
             $acme->check_challenge();
@@ -240,22 +201,23 @@ sub _request_for_ssl_cert {
         my $cert  = $acme->sign($csr_file);
         my $chain = $acme->chain();
 
-        die "Could not write certificate to local disk"    if !$self->spew($der_file, $cert);
-        die "Could not write CA certificate to local disk" if !$self->spew($tmp_ca,   $chain);
-      
-        my $conver_ca_output_ref = $self->_convert_to_crt($tmp_ca, $ca_file);
-        if ($conver_ca_output_ref->{stderr}) {
-            die  "Error occurred at line number ".  __LINE__ . ': ' . $conver_ca_output_ref->{stderr};
+        die "Could not write certificate to local disk"    if !$self->spew( $der_file, $cert );
+        die "Could not write CA certificate to local disk" if !$self->spew( $tmp_ca,   $chain );
+
+        my $conver_ca_output_ref = $self->_convert_to_crt( $tmp_ca, $ca_file );
+        if ( $conver_ca_output_ref->{stderr} ) {
+            die "Error occurred at line number " . __LINE__ . ': '
+                . $conver_ca_output_ref->{stderr};
         }
 
-        my $output_ref = $self->_convert_to_crt($der_file, $cert_file);
-        if ($output_ref->{stderr}) {
-            die "Error occurred at line number ".  __LINE__ . ': ' . $output_ref->{stderr};
+        my $output_ref = $self->_convert_to_crt( $der_file, $cert_file );
+        if ( $output_ref->{stderr} ) {
+            die "Error occurred at line number " . __LINE__ . ': ' . $output_ref->{stderr};
         }
     };
 
     if ($@) {
-        if (ref $@ ne "Protocol::ACME::Exception") {
+        if ( ref $@ ne "Protocol::ACME::Exception" ) {
             $result_hash->{message} = $@;
         }
         else {
@@ -272,27 +234,26 @@ sub _request_for_ssl_cert {
     return $result_hash;
 }
 
-
 sub create_account_key {
-    my ($self, $email) = @_;
+    my ( $self, $email ) = @_;
 
     my $key_file = $self->{accounts} . '/' . $email . '.key';
-    return $self->slurp($key_file) if (-e $key_file);
+    return $self->slurp($key_file) if ( -e $key_file );
 
     my $genkey = $self->{openssl}->generate_key();
 
-    if (!$genkey || !$genkey->{'status'} || !$genkey->{'stdout'}) {
+    if ( !$genkey || !$genkey->{'status'} || !$genkey->{'stdout'} ) {
         die "Key generation failed: $genkey->{'stderr'}\n";
     }
 
     my $key = $genkey->{'stdout'};
-    $self->spew($key_file, $key);
+    $self->spew( $key_file, $key );
 
     return $key;
 }
 
 sub _create_csr {
-    my ($self, $hash_ref) = @_;
+    my ( $self, $hash_ref ) = @_;
 
     my $domain = $hash_ref->{domain};
 
@@ -310,7 +271,7 @@ sub _create_csr {
         ]
     );
 
-    if (-e $csrfile) {
+    if ( -e $csrfile ) {
         return $csrfile;
     }
 
@@ -326,27 +287,32 @@ sub _create_domain_key {
 
     my $genkey = $self->{openssl}->generate_key();
 
-    if (!$genkey || !$genkey->{'status'} || !$genkey->{'stdout'}) {
+    if ( !$genkey || !$genkey->{'status'} || !$genkey->{'stdout'} ) {
         die "Key generation failed: $genkey->{'stderr'}\n";
     }
 
     my $key = $genkey->{'stdout'};
-    $self->spew($file, $key);
+    $self->spew( $file, $key );
 
     return $file;
 }
 
 sub _convert_to_crt {
-    my ($self, $file, $out_file) = @_;
+    my ( $self, $file, $out_file ) = @_;
 
     if ( length $out_file && -e $out_file ) {
         unlink $out_file;    # Existence of an old key file will cause additional prompting
     }
-    
-    my $output =
-        $self->{openssl}->run('args' =>
-            ['x509', '-inform' => 'der', '-outform' => 'pem', '-in' => $file, '-out' => $out_file]
-        );
+
+    my $output = $self->{openssl}->run(
+        'args' => [
+            'x509',
+            '-inform'  => 'der',
+            '-outform' => 'pem',
+            '-in'      => $file,
+            '-out'     => $out_file
+        ]
+    );
 
     return $output;
 }
@@ -354,28 +320,25 @@ sub _convert_to_crt {
 sub has_active_ssl_cert {
     my $self = shift;
 
-    my $config_file = -e $self->{config_dir} . '/' . $self->{domain} . '.json' ? '1' : '0';
-
     my $ssl_vhosts = $self->{whm}->fetch_installed_ssl_info;
 
     return 1
-        if (defined $ssl_vhosts->{$self->{domain}}
-        and $ssl_vhosts->{$self->{domain}}->{status} eq 'Active'
-        and !$config_file);
+        if ( defined $ssl_vhosts->{ $self->{domain} }
+        and $ssl_vhosts->{ $self->{domain} }->{status} eq 'Active' );
 
     return 0;
 }
 
 sub _get_default_output_hash {
-    my %output = ('status' => 0, 'message' => '', 'output' => '');
+    my %output = ( 'status' => 0, 'message' => '', 'output' => '' );
     return wantarray ? %output : \%output;
 }
 
 sub slurp {
-    my ($self, $file) = @_;
+    my ( $self, $file ) = @_;
 
     my $content;
-    if (open(my $fh, '<', $file)) {
+    if ( open( my $fh, '<', $file ) ) {
         local $/;
         $content = <$fh>;
     }
@@ -384,33 +347,11 @@ sub slurp {
 }
 
 sub spew {
-    my ($self, $file, $content) = @_;
+    my ( $self, $file, $content ) = @_;
 
-    if (open(my $fh, '>', $file)) {
+    if ( open( my $fh, '>', $file ) ) {
         print {$fh} $content;
         close($fh);
-
-        return 1;
-    }
-
-    return 0;
-}
-
-sub read_as_hash {
-    my ($self, $file) = @_;
-
-    my $content = $self->slurp($file);
-
-    return JSON::decode_json($content);
-}
-
-sub store_as_json {
-    my ($self, $content) = @_;
-
-    my $file = $self->{'config_dir'} . '/' . $self->{'domain'} . '.json';
-    if (open(my $rh, '>', $file)) {
-        print $rh JSON::encode_json($content);
-        close($rh);
 
         return 1;
     }
@@ -421,26 +362,25 @@ sub store_as_json {
 sub _resolve_file_location {
     my $self = shift;
 
-    my $dir = $self->_create_domain_dir();
+    my $dir      = $self->_create_domain_dir();
     my $hash_ref = {
-        'cert'     => join('/', $dir, $self->{domain} . '.crt'),
-        'csr'      => join('/', $dir, $self->{domain} . '.csr'),
-        'key'      => join('/', $dir, $self->{domain} . '.key'),
-        'ca'       => join('/', $dir, $self->{domain} . '.ca'),
-        'ca_der'   => join('/', $dir, $self->{domain} . '_tmp_ca_.der'),
-        'cert_der' => join('/', $dir, $self->{domain} . '_tmp_cert_.der'),
+        'cert'     => join( '/', $dir, $self->{domain} . '.crt' ),
+        'csr'      => join( '/', $dir, $self->{domain} . '.csr' ),
+        'key'      => join( '/', $dir, $self->{domain} . '.key' ),
+        'ca'       => join( '/', $dir, $self->{domain} . '.ca' ),
+        'ca_der'   => join( '/', $dir, $self->{domain} . '_tmp_ca_.der' ),
+        'cert_der' => join( '/', $dir, $self->{domain} . '_tmp_cert_.der' ),
     };
-    
+
     return $hash_ref;
 }
-
 
 sub _create_domain_dir {
     my $self = shift;
 
-    my $dir  = $self->{domain_dir} . '/' . $self->{domain};
-    if ( ! -d $dir ) {
-        mkdir($dir, 0700) or die $!;
+    my $dir = $self->{domain_dir} . '/' . $self->{domain};
+    if ( !-d $dir ) {
+        mkdir( $dir, 0700 ) or die $!;
     }
 
     return $dir;

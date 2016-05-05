@@ -26,7 +26,6 @@ sub new {
 sub _get_hostname {
     my $self = shift;
 
-
     my $api_ref  = $self->{'whmapi'}->liveapi_request('gethostname');
     my $hostname = $api_ref->{'data'}->{'hostname'};
 
@@ -39,21 +38,21 @@ sub _resolve_file_location {
     my $hostname = $self->_get_hostname();
 
     for my $parrent_dir ( $self->{'work_dir'}, $self->{'hostname_dir'}, $self->{'accounts'} ) {
-        mkdir($parrent_dir, 0700) or die $! unless -d $parrent_dir;
+        mkdir( $parrent_dir, 0700 ) or die $! unless -d $parrent_dir;
     }
 
     my $dir = $self->{hostname_dir} . '/' . $self->{'domain'};
-    if (!-d $dir) {
-        mkdir($dir, 0700) or die $!;
+    if ( !-d $dir ) {
+        mkdir( $dir, 0700 ) or die $!;
     }
 
     my $hash_ref = {
-        'cert'     => join('/', $dir, $self->{'domain'} . '.crt'),
-        'csr'      => join('/', $dir, $self->{'domain'} . '.csr'),
-        'key'      => join('/', $dir, $self->{'domain'} . '.key'),
-        'ca'       => join('/', $dir, $self->{'domain'} . '.ca'),
-        'ca_der'   => join('/', $dir, $self->{'domain'} . '_tmp_ca_.der'),
-        'cert_der' => join('/', $dir, $self->{'domain'} . '_tmp_cert_.der'),
+        'cert'     => join( '/', $dir, $self->{'domain'} . '.crt' ),
+        'csr'      => join( '/', $dir, $self->{'domain'} . '.csr' ),
+        'key'      => join( '/', $dir, $self->{'domain'} . '.key' ),
+        'ca'       => join( '/', $dir, $self->{'domain'} . '.ca' ),
+        'ca_der'   => join( '/', $dir, $self->{'domain'} . '_tmp_ca_.der' ),
+        'cert_der' => join( '/', $dir, $self->{'domain'} . '_tmp_cert_.der' ),
     };
 
     return $hash_ref;
@@ -83,21 +82,21 @@ sub get_certificate {
 }
 
 sub install_cert_for_service {
-    my ($self, $services) = @_;
+    my ( $self, $services ) = @_;
 
-    my ($ok, $message);
-    foreach my $service (@{$services}) {
-        ($ok, $message) = $self->_install_cert($service);
-        if (!$ok) {
+    my ( $ok, $message );
+    foreach my $service ( @{$services} ) {
+        ( $ok, $message ) = $self->_install_cert($service);
+        if ( !$ok ) {
             last;
         }
     }
 
-    return wantarray ? ($ok, $message) : $ok;
+    return wantarray ? ( $ok, $message ) : $ok;
 }
 
 sub _install_cert {
-    my ($self, $service) = @_;
+    my ( $self, $service ) = @_;
 
     my $cert_file = "/var/letsencrypt/live/" . $self->{'domain'} . '/' . $self->{domain} . '.crt';
     my $key_file  = "/var/letsencrypt/live/" . $self->{'domain'} . '/' . $self->{domain} . '.key';
@@ -109,8 +108,7 @@ sub _install_cert {
 
     my $status = $self->{'whmapi'}->liveapi_request(
         'install_service_ssl_certificate',
-        {
-            'api.version' => '1',
+        {   'api.version' => '1',
             'service'     => $service,
             'crt'         => $cert,
             'key'         => $key,
@@ -119,36 +117,34 @@ sub _install_cert {
     );
 
     if ( !$status->{'metadata'}->{'result'} ) {
-        return wantarray ? ('0', $status->{'metadata'}->{'reason'}) : '0';
+        return wantarray ? ( '0', $status->{'metadata'}->{'reason'} ) : '0';
     }
 
-    return wantarray ? ('1', $status->{'metadata'}->{'reason'}) : '1';
+    return wantarray ? ( '1', $status->{'metadata'}->{'reason'} ) : '1';
 }
 
 sub check_for_expiry {
     my $self = shift;
 
     my $cert_file = "/var/letsencrypt/live/" . $self->{'domain'} . '/' . $self->{domain} . '.crt';
-    
-    my $crt  = $self->slurp($cert_file);
-    my $crt_info  = Cpanel::SSL::Utils::parse_certificate_text($crt);
-    
-    my $days_left = int(($crt_info->{'not_after'} - time()) / 86400);
 
-    if ($days_left < '10') {
-       my $result_ref = $self->get_certificate();       
-       if ($result_ref->{'success'}) {
-          my @services = ('cpanel', 'exim', 'ftp', 'dovecot');
-          my ($ok, $message) = $self->install_cert_for_service(\@services);
-          die $message if !$ok;
-       }
+    my $crt      = $self->slurp($cert_file);
+    my $crt_info = Cpanel::SSL::Utils::parse_certificate_text($crt);
+
+    my $days_left = int( ( $crt_info->{'not_after'} - time() ) / 86400 );
+
+    if ( $days_left < '100' ) {
+        my $result_ref = $self->get_certificate();
+        if ( $result_ref->{'success'} ) {
+            my @services = ( 'cpanel', 'exim', 'ftp', 'dovecot' );
+            my ( $ok, $message ) = $self->install_cert_for_service( \@services );
+            die $message if !$ok;
+        }
+        else {
+            die $result_ref->{'message'};
+        }
     }
-    else {
-        die $result_ref->{'message'};
-    }
-   return $ok;
+    return $ok;
 }
-
-
 
 1;

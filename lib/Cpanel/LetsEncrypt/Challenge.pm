@@ -28,9 +28,9 @@ sub _init {
     my $self = shift;
     my $args;
 
-    if (@_ == 1) {
+    if ( @_ == 1 ) {
         $args = shift;
-        if (ref $args ne "HASH") {
+        if ( ref $args ne "HASH" ) {
             croak "Must pass a hash or hashref to challenge constructor";
         }
     }
@@ -39,7 +39,7 @@ sub _init {
     }
 
     for my $required_arg (qw ( documentroot user )) {
-        if (!exists $args->{$required_arg}) {
+        if ( !exists $args->{$required_arg} ) {
             croak "Require arg $required_arg missing from chalenge constructor";
         }
         else {
@@ -49,7 +49,7 @@ sub _init {
 }
 
 sub handle {
-    my ($self, $challenge, $fingerprint) = @_;
+    my ( $self, $challenge, $fingerprint ) = @_;
 
     my $dir  = "$self->{'documentroot'}/.well-known/acme-challenge";
     my $file = "$dir/$challenge";
@@ -58,31 +58,32 @@ sub handle {
 
     my $lock;
     if ( defined $self->{'user'} and $self->{'user'} ne 'root' ) {
-        if (( defined $ENV{'REMOTE_USER'} and $ENV{'REMOTE_USER'} eq 'root') || (defined $ENV{'USER'} and $ENV{'USER'} eq 'root')) {
+        if (   ( defined $ENV{'REMOTE_USER'} and $ENV{'REMOTE_USER'} eq 'root' )
+            || ( defined $ENV{'USER'} and $ENV{'USER'} eq 'root' ) )
+        {
             Cpanel::AccessIds::ReducedPrivileges::call_as_user(
                 sub {
                     File::Path::mkpath($dir) unless -e $dir;
-                    $lock = Cpanel::SafeFile::safeopen($fh, '>', $file);
+                    $lock = Cpanel::SafeFile::safeopen( $fh, '>', $file );
                 },
                 $self->{user}
             );
         }
         else {
             File::Path::mkpath($dir) unless -e $dir;
-            $lock = Cpanel::SafeFile::safeopen($fh, '>', $file);
+            $lock = Cpanel::SafeFile::safeopen( $fh, '>', $file );
         }
     }
     else {
         File::Path::mkpath($dir) unless -e $dir;
-        $lock = Cpanel::SafeFile::safeopen($fh, '>', $file);
+        $lock = Cpanel::SafeFile::safeopen( $fh, '>', $file );
     }
-    unless (defined $lock) {
+    unless ( defined $lock ) {
         croak "Unable to lock/open '$file': $!";
     }
     print {$fh} "$challenge.$fingerprint";
-    Cpanel::SafeFile::safeclose($fh, $lock);
+    Cpanel::SafeFile::safeclose( $fh, $lock );
     return 0;
 }
-
 
 1;

@@ -4,10 +4,10 @@ use strict;
 use JSON ();
 
 sub new {
-    my ($class, %opts) = @_;
+    my ( $class, %opts ) = @_;
 
     my $self = {%opts};
-    bless($self, $class);
+    bless( $self, $class );
 
     $self->_init;
 
@@ -22,15 +22,16 @@ sub _init {
         'cPanel/PublicAPI.pm' => 'cPanel::PublicAPI',
     };
 
-    foreach my $module (keys %{$modules}) {
+    foreach my $module ( keys %{$modules} ) {
         eval { require "$module"; };
 
-        if (!$@) {
+        if ( !$@ ) {
             my $accesshash = _read_hash();
             my $username   = 'root';
 
             $self->{whm_api} =
-                $modules->{$module}->new(usessl => 0, user => $username, accesshash => $accesshash)
+                $modules->{$module}
+                ->new( usessl => 0, user => $username, accesshash => $accesshash )
                 or die $!;
             last;
         }
@@ -38,21 +39,21 @@ sub _init {
 }
 
 sub get_domain_userdata {
-    my ($self, $domain) = @_;
+    my ( $self, $domain ) = @_;
 
-    my $domainuserdata = $self->liveapi_request('domainuserdata', {domain => $domain});
+    my $domainuserdata = $self->liveapi_request( 'domainuserdata', { domain => $domain } );
 
-    return (ref $domainuserdata->{data})
+    return ( ref $domainuserdata->{data} )
         ? $domainuserdata->{data}->{userdata}
         : $domainuserdata->{userdata};
 }
 
 sub get_email_by_domain {
-    my ($self, $domain) = @_;
+    my ( $self, $domain ) = @_;
 
-    my $accountsummary = $self->liveapi_request('accountsummary', {domain => $domain});
+    my $accountsummary = $self->liveapi_request( 'accountsummary', { domain => $domain } );
 
-    return (ref $accountsummary->{data})
+    return ( ref $accountsummary->{data} )
         ? $accountsummary->{data}->{acct}->[0]->{email}
         : $accountsummary->{acct}->[0]->{email};
 }
@@ -62,11 +63,11 @@ sub get_expired_domains {
 
     my $ssl_vhosts = $self->fetch_installed_ssl_info;
     my @domains;
-    foreach my $ssl_vhost (keys(%{$ssl_vhosts})) {
-        if ( $ssl_vhosts->{$ssl_vhost}->{'daysleft'} < '23'
-            and $ssl_vhosts->{$ssl_vhost}->{'issuer_organizationName'} =~ m/Let's\s*Encrypt/i)
+    foreach my $ssl_vhost ( keys( %{$ssl_vhosts} ) ) {
+        if (    $ssl_vhosts->{$ssl_vhost}->{'daysleft'} < '23'
+            and $ssl_vhosts->{$ssl_vhost}->{'issuer_organizationName'} =~ m/Let's\s*Encrypt/i )
         {
-            push(@domains, $ssl_vhost);
+            push( @domains, $ssl_vhost );
         }
     }
 
@@ -74,8 +75,7 @@ sub get_expired_domains {
 }
 
 sub install_ssl_certificate {
-    my ($self, $hash_ref) = @_;
-
+    my ( $self, $hash_ref ) = @_;
 
     my $cert_file = "/var/letsencrypt/live/" . $hash_ref->{domain} . "/$hash_ref->{domain}.crt";
     my $key_file  = "/var/letsencrypt/live/" . $hash_ref->{domain} . "/$hash_ref->{domain}.key";
@@ -87,8 +87,7 @@ sub install_ssl_certificate {
 
     my $status = $self->liveapi_request(
         'installssl',
-        {
-            'api.version' => '1',
+        {   'api.version' => '1',
             'domain'      => $hash_ref->{domain},
             'crt'         => $cert,
             'key'         => $key,
@@ -97,16 +96,16 @@ sub install_ssl_certificate {
         }
     );
 
-    unless ($status->{status} or $status->{data}->{status}) {
+    unless ( $status->{status} or $status->{data}->{status} ) {
         return
             wantarray
-            ? ('0', $status->{statusmsg} ? $status->{statusmsg} : $status->{data}->{statusmsg})
+            ? ( '0', $status->{statusmsg} ? $status->{statusmsg} : $status->{data}->{statusmsg} )
             : '0';
     }
 
     return
         wantarray
-        ? ('1', $status->{statusmsg} ? $status->{statusmsg} : $status->{data}->{statusmsg})
+        ? ( '1', $status->{statusmsg} ? $status->{statusmsg} : $status->{data}->{statusmsg} )
         : '1';
 }
 
@@ -116,24 +115,31 @@ sub listaccts {
     my @domains;
     my $ssl_vhosts   = $self->fetch_installed_ssl_info;
     my $accounts_ref = $self->liveapi_request('listaccts');
-    $accounts_ref = (ref $accounts_ref->{data}) ? $accounts_ref->{data} : $accounts_ref;
+    $accounts_ref = ( ref $accounts_ref->{data} ) ? $accounts_ref->{data} : $accounts_ref;
 
-    foreach my $acct (@{$accounts_ref->{acct}}) {
-        push(@domains, $acct->{domain}) unless $ssl_vhosts->{$acct->{domain}};
+    foreach my $acct ( @{ $accounts_ref->{acct} } ) {
+        push( @domains, $acct->{domain} ) unless $ssl_vhosts->{ $acct->{domain} };
 
         eval {
             my $content      = $self->slurp("/var/cpanel/userdata/$acct->{user}/main");
             my $userdata_ref = Cpanel::YAML::Load($content);
             my @subdomains;
-            @subdomains      = @{$userdata_ref->{sub_domains}} if ref $userdata_ref->{sub_domains} eq 'ARRAY';
-            my @addondomains = keys %{$userdata_ref->{addon_domains}};
-            my @alt_domains  = (@subdomains, @addondomains);         
+            @subdomains = @{ $userdata_ref->{sub_domains} }
+                if ref $userdata_ref->{sub_domains} eq 'ARRAY';
+            my @addondomains = keys %{ $userdata_ref->{addon_domains} };
+            my @alt_domains = ( @subdomains, @addondomains );
 
             foreach my $alt_domain (@alt_domains) {
-                my $main_domain = $self->liveapi_request( 'domainuserdata', { domain => $alt_domain } )->{data}->{userdata}->{servername}; 
-                next if ( $ssl_vhosts->{$alt_domain} or grep /^$alt_domain$/, @{$ssl_vhosts->{$main_domain}->{domains}} );
-                push(@domains, $alt_domain);
-            }             
+                my $main_domain =
+                    $self->liveapi_request( 'domainuserdata', { domain => $alt_domain } )->{data}
+                    ->{userdata}->{servername};
+                next
+                    if (
+                    $ssl_vhosts->{$alt_domain} or grep /^$alt_domain$/,
+                    @{ $ssl_vhosts->{$main_domain}->{domains} }
+                    );
+                push( @domains, $alt_domain );
+            }
         };
     }
 
@@ -143,18 +149,18 @@ sub listaccts {
 sub fetch_installed_ssl_info {
     my $self = shift;
 
-    my $ssl_info = $self->liveapi_request('fetch_ssl_vhosts', {'api.version' => '1'});
+    my $ssl_info = $self->liveapi_request( 'fetch_ssl_vhosts', { 'api.version' => '1' } );
     my $hash;
 
-    foreach my $crt (@{$ssl_info->{data}->{vhosts}}) {
-        my $days_left = int(($crt->{crt}->{not_after} - time()) / 86400);
+    foreach my $crt ( @{ $ssl_info->{data}->{vhosts} } ) {
+        my $days_left = int( ( $crt->{crt}->{not_after} - time() ) / 86400 );
 
-        $hash->{$crt->{servername}} = {
+        $hash->{ $crt->{servername} } = {
             'domains'                 => $crt->{crt}->{domains},
             'not_after'               => $crt->{crt}->{not_after},
             'issuer_organizationName' => $crt->{crt}->{'issuer.organizationName'},
             'daysleft'                => $days_left,
-            'status'                  => ($days_left > '1') ? 'Active' : 'Expired',
+            'status'                  => ( $days_left > '1' ) ? 'Active' : 'Expired',
         };
     }
 
@@ -162,11 +168,11 @@ sub fetch_installed_ssl_info {
 }
 
 sub liveapi_request {
-    my ($self, $func, $opts) = @_;
+    my ( $self, $func, $opts ) = @_;
 
-    $opts = {} unless (ref $opts eq 'HASH');
+    $opts = {} unless ( ref $opts eq 'HASH' );
 
-    my $response = $self->{whm_api}->whm_api($func, $opts, 'json');
+    my $response = $self->{whm_api}->whm_api( $func, $opts, 'json' );
 
     my $json = JSON->new->allow_nonref->utf8->relaxed->decode($response);
 
@@ -177,14 +183,14 @@ sub _read_hash() {
     my $AccessHash = "/root/.accesshash";
 
     eval {
-        unless (-f $AccessHash)
+        unless ( -f $AccessHash )
         {
-            my $pid = IPC::Open3::open3(my $wh, my $rh, my $eh,
-                '/usr/local/cpanel/whostmgr/bin/whostmgr setrhash');
-            waitpid($pid, 0);
+            my $pid = IPC::Open3::open3( my $wh, my $rh, my $eh,
+                '/usr/local/cpanel/whostmgr/bin/whostmgr setrhash' );
+            waitpid( $pid, 0 );
         }
     };
-    open(my $hash_fh, "<", $AccessHash) || die "Cannot open access hash: " . $AccessHash;
+    open( my $hash_fh, "<", $AccessHash ) || die "Cannot open access hash: " . $AccessHash;
 
     my $accesshash = do { local $/; <$hash_fh>; };
     $accesshash =~ s/\n//g;
@@ -194,16 +200,15 @@ sub _read_hash() {
 }
 
 sub slurp {
-    my ($self, $file) = @_;
+    my ( $self, $file ) = @_;
 
     my $content;
-    if (open(my $fh, '<', $file)) {
+    if ( open( my $fh, '<', $file ) ) {
         local $/;
         $content = <$fh>;
     }
 
     return $content;
 }
-
 
 1;
