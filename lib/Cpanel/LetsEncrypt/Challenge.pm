@@ -82,8 +82,17 @@ sub handle {
         croak "Unable to lock/open '$file': $!";
     }
     print {$fh} "$challenge.$fingerprint";
+   
     Cpanel::SafeFile::safeclose( $fh, $lock );
+    $self->{'challenge_file'} = $file;
+
     return 0;
+}
+
+sub cleanup {
+    my $self = shift;
+
+    eval { unlink $self->{'challenge_file'}; };
 }
 
 1;

@@ -190,12 +190,11 @@ sub _request_for_ssl_cert {
         foreach my $domain (@domains) {
             $domain =~ s/^\s+|\s+$//g;
             $acme->authz($domain);
-            $acme->handle_challenge(
-                Cpanel::LetsEncrypt::Challenge->new(
-                    { documentroot => $hash->{'webroot-path'}, user => $hash->{username} }
-                )
-            );
+       
+            my $challenge = Cpanel::LetsEncrypt::Challenge->new( { documentroot => $hash->{'webroot-path'}, user => $hash->{username} } );
+            $acme->handle_challenge($challenge);
             $acme->check_challenge();
+            $challenge->cleanup;
         }
 
         my $cert  = $acme->sign($csr_file);
