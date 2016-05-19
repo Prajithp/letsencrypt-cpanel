@@ -127,24 +127,26 @@ sub check_for_expiry {
     my $self = shift;
 
     my $cert_file = "/var/letsencrypt/live/" . $self->{'domain'} . '/' . $self->{domain} . '.crt';
+    if ( -e $cert_file ) {
+        my $crt      = $self->slurp($cert_file);
+        my $crt_info = Cpanel::SSL::Utils::parse_certificate_text($crt);
 
-    my $crt      = $self->slurp($cert_file);
-    my $crt_info = Cpanel::SSL::Utils::parse_certificate_text($crt);
+        my $days_left = int( ( $crt_info->{'not_after'} - time() ) / 86400 );
 
-    my $days_left = int( ( $crt_info->{'not_after'} - time() ) / 86400 );
-
-    if ( $days_left < '100' ) {
-        my $result_ref = $self->get_certificate();
-        if ( $result_ref->{'success'} ) {
-            my @services = ( 'cpanel', 'exim', 'ftp', 'dovecot' );
-            my ( $ok, $message ) = $self->install_cert_for_service( \@services );
-            die $message if !$ok;
+        if ( $days_left < '30' ) {
+            my $result_ref = $self->get_certificate();
+            if ( $result_ref->{'success'} ) {
+                my @services = ( 'cpanel', 'exim', 'ftp', 'dovecot' );
+                my ( $ok, $message ) = $self->install_cert_for_service( \@services );
+                die $message if !$ok;
+            }
+            else {
+                die $result_ref->{'message'};
+            }
         }
-        else {
-            die $result_ref->{'message'};
-        }
+        return $ok;
     }
-    return $ok;
+    return;
 }
 
 1;
