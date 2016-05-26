@@ -133,7 +133,7 @@ sub check_for_expiry {
 
         my $days_left = int( ( $crt_info->{'not_after'} - time() ) / 86400 );
 
-        if ( $days_left < '30' ) {
+        if ( $days_left < '30' and $crt_info->{'issuer'}->{organizationName} =~ m{Let\'s\s+Encrypt}i) {
             my $result_ref = $self->get_certificate();
             if ( $result_ref->{'success'} ) {
                 my @services = ( 'cpanel', 'exim', 'ftp', 'dovecot' );
