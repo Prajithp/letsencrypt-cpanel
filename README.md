@@ -8,6 +8,11 @@ Support for service SSL certificates has been recently added, and is considered 
 ### VERSION
 Version 1.4
 
+### Requirements
+
+- CentOS 5/6/7
+- If using CentOS 5, SNI is not supported at the OS level. Therefore, you'll either need static IP addresses for each domain on the system, or you will need to be using CentOS 6 or 7.
+
 ### Installation
 
 ```
