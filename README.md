@@ -33,6 +33,16 @@ cd letsencrypt-cpanel
 ./upgrade.sh
 ```
 
+### Errors
+
+`403 error: Authorizations for these names not found or expired`
+
+Let's Encrypt verifies domains via http using the pathname `.well-known` and the subfolder `acme-challenge`, if there are any rules in `.htaccess` that redirect this folder to https (or elsewhere) the verification will fail. To exclude rewrites for the `.well-known` folder place the following line to `.htaccess` in your **document root** directly under `RewriteEngine On`:
+
+```RewriteRule ^.well-known(.*)$ - [L,NC]```
+
+If the `.well-known` folder is requested (by Let's Encrypt) it doesn't process further rules and avoids any SSL redirection that happens below it.
+
 ### Uninstall
 	
 ```
