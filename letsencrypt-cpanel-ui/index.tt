@@ -1,4 +1,17 @@
-  <div class="container">
+	<style>
+		#icon-{
+			font-size: 0px;
+			vertical-align: top;
+		}
+		#icon- img{
+			display: inline-block;
+			vertical-align: top;
+			height: 30px;
+			margin-top: 3px;
+			width: 30px;
+		}
+	</style>
+	<div class="container">
     <div class="content">
       <legend class="well text-center text-warning fa fa-expeditedssl fa-lg"> Manage letsencrypt ssl certificate</legend>
       [% IF message %]
