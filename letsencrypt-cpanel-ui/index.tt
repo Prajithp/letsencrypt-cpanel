@@ -1,26 +1,17 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>letsencrypt cPanel</title>
-
-  <!-- Bootstrap -->
-  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
-  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css">
-  <style type="text/css">.page-header {border: 0;}</style>
-  <style type="text/css">.navbar-brand>img { display: -moz-inline-stack; }</style>
-  <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
-  <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
-  <!--[if lt IE 9]>
-      <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.2/html5shiv.js"></script>
-      <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
-    <![endif]-->
-</head>
-
-<body>
-  <div class="container">
+	<style>
+		#icon-{
+			font-size: 0px;
+			vertical-align: top;
+		}
+		#icon- img{
+			display: inline-block;
+			vertical-align: top;
+			height: 30px;
+			margin-top: 3px;
+			width: 30px;
+		}
+	</style>
+	<div class="container">
     <div class="content">
       <legend class="well text-center text-warning fa fa-expeditedssl fa-lg"> Manage letsencrypt ssl certificate</legend>
       [% IF message %]
@@ -95,7 +86,7 @@
                       [% END %]
                     </select>
                   </div>
-                   <input type="hidden" name="action" value="install"> 
+                   <input type="hidden" name="action" value="install">
                 </div>
                 <div class="form-group">
                   <div class="col-sm-offset-2 col-sm-10">
@@ -115,7 +106,7 @@
       <p class="navbar-text pull-left">&copy; 2016 - App Developed By Prajith
            <a href="http://ndimensionz.com" target="_blank" >Ndimensionz</a>
       </p>
-      
+
       <a href="http://ndimensionz.com" target="_blank" class="navbar-btn btn-danger btn pull-right">
       <span class="glyphicon glyphicon-star"></span> Ndimensionz</a>
     </div>
@@ -143,8 +134,6 @@
         $("#lnkDashboard").prop("href", "[% base_url %]home/dashboard.html");
         $("#lnkHeaderNotifications").prop("href", "[% base_url %]home/notifications.html.tt");
         $("#lnkUserManager").prop("href", "[% base_url %]user_manager/index.html");
-        $("#icon-").html('<img src="img/icon.png" alt="" />');                
+        $("#icon-").html('<img src="img/icon.png" alt="" />');
    </script>
  [% END %]
-</body>
-</html>
