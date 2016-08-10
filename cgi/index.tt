@@ -21,7 +21,7 @@
 <body>
   <div class="container">
     <div class="content">
-      <legend class="well text-center text-warning fa fa-expeditedssl fa-lg"> Manage letsencrypt ssl certificate</legend>
+      <legend class="well text-center text-warning fa fa-expeditedssl fa-lg"> Manage Let's Encrypt SSL Crtificate</legend>
       [% IF message %]
       <div class="alert alert-[% status %] alert-dismissible">
         <div class="text-center">
