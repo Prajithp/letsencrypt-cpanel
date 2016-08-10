@@ -80,7 +80,7 @@ if [[ -e "/usr/local/cpanel/whostmgr/docroot/cgi/letsencrypt/letsencrypt.pl" ]];
   rm -rvf /usr/local/cpanel/Cpanel/LetsEncrypt.pm /usr/local/cpanel/Cpanel/LetsEncrypt
   rm -rvf /usr/local/cpanel/whostmgr/docroot/cgi/letsencrypt/letsencrypt.pl
   rm -rvf /usr/local/cpanel/whostmgr/docroot/cgi/letsencrypt/index.tt
-  rm -rvf /usr/local/cpanel/whostmgr/docroot/addon_plugins/ico-letsencrypt.svg
+  rm -rvf /usr/local/cpanel/whostmgr/docroot/addon_plugins/ico-letsencrypt.png
   rm -rvf /scripts/renew_letsencrypt_ssl.pl
   
   if [ -e "/usr/local/cpanel/base/3rdparty/letsencrypt-cpanel-ui/conf" ]; then
@@ -101,7 +101,7 @@ if [[ -e "/usr/local/cpanel/whostmgr/docroot/cgi/letsencrypt/letsencrypt.pl" ]];
   install -o root -g wheel -m 0755 cgi/index.tt /usr/local/cpanel/whostmgr/docroot/cgi/letsencrypt/index.tt
   
   test -e "/usr/local/cpanel/whostmgr/docroot/addon_plugins" || mkdir "/usr/local/cpanel/whostmgr/docroot/addon_plugins"
-  install -o root -g wheel -m 0644 icons/ico-letsencrypt.svg /usr/local/cpanel/whostmgr/docroot/addon_plugins/ico-letsencrypt.svg
+  install -o root -g wheel -m 0644 icons/ico-letsencrypt.png /usr/local/cpanel/whostmgr/docroot/addon_plugins/ico-letsencrypt.png
   /usr/local/cpanel/bin/register_appconfig letsencrypt_app.conf
   cp -r renew_letsencrypt_ssl.pl  /scripts/renew_letsencrypt_ssl.pl
   chmod 755 /scripts/renew_letsencrypt_ssl.pl
