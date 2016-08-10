@@ -1,0 +1,10 @@
+2016-08-10 k-poole@github
+ - Updated WHM and cPanel UI styles to match WHM 11
+ - Made naming of "Let's Encyrpt" consistent throughout plugin
+ - Fixed up some minor capitalisation
+ - Re-worded some messages for clarity
+ - Removed old references to SVG icon and renamed icon to PNG as it actually is
+ - RECOMMEND RE-RUNNING ./install.sh FOR THIS UPDATE
+ 
+2016-08-10 k-poole@github
+ - Replaced apostrophe in cPanel plugin  name with HTML code to resolve issue with known cPanel bug in WHM 11.58.12 and display correctly

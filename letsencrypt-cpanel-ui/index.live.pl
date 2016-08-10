@@ -76,7 +76,7 @@ sub build_template {
 
     $template->process($file, $vars_ref, \$output) || die 'Template-error: ' . $template->error();
     if ( UserStyle() eq 'basic' ) {
-        print $cpanel->cpanel_api()->header('LetsEncrypt');
+        print $cpanel->cpanel_api()->header('Let&#39;s Encrypt');
         print STDOUT $output;
     }
     else {

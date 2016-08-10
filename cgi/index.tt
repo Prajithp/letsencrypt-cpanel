@@ -21,28 +21,51 @@
 <body>
   <div class="container">
     <div class="content">
-      <legend class="well text-center text-warning fa fa-expeditedssl fa-lg"> Manage letsencrypt ssl certificate</legend>
-      [% IF message %]
-      <div class="alert alert-[% status %] alert-dismissible">
-        <div class="text-center">
-          [% message %]
-        </div>
-      </div>
-     [% END %]
-      <div class="panel panel-default">
+      <style>
+        .whm-58-heading {
+    			font-family: 'Open Sans',sans-serif;
+    			text-align: left;
+    			text-transform: uppercase;
+    			font-weight: normal;
+    			background-color: rgba(41,58,74,.95);
+    			color: #fff;
+    			font-size: 14px;
+    			margin-bottom: 0;
+    			border-radius: 4px 4px 0 0;
+    			border-bottom: none;
+    		}
+    		
+    		.whm-58-subheading {
+    			border-radius: 0 0 4px 4px;
+    			border-top: none;
+    		}
+    				
+    		.whm-58-subheading > .panel-heading {
+    			line-height: 48px;
+    		}
+      </style>
+      <legend class="well text-center text-warning whm-58-heading"> Manage Let's Encrypt SSL Certificate</legend>
+      <div class="panel panel-default whm-58-subheading">
         <div class="panel-heading clearfix">
-          <strong>SSL enabled Vhosts</strong>
+          <strong>SSL Enabled Domains</strong>
           <div class="btn pull-right">
             <a href="#" class="btn btn-success btn-mini" data-toggle="modal" data-target="#service">
               <span class="fa fa-chain fa-sm"></span>
-              Install letsencrypt on whm services
+              New Certificate for WHM Services
             </a>
             <a href="#" class="btn btn-info btn-mini" data-toggle="modal" data-target="#install">
               <span class="fa fa-chain fa-sm"></span>
-              Install letsencrypt SSL Cert
+              New Certificate for Domain
             </a>
           </div>
         </div>
+        [% IF message %]
+          <div class="alert alert-[% status %] alert-dismissible">
+            <div class="text-center">
+              [% message %]
+            </div>
+          </div>
+        [% END %]
         <div class="panel-body">
           <table class="table" id="example">
             <thead>
