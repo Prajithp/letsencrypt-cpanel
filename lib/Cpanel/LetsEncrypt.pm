@@ -60,7 +60,7 @@ sub activate_ssl_certificate {
 
     if ( $self->has_active_ssl_cert ) {
         $return_vars->{'message'} =
-            "The domain $self->{domain} is already having an active ssl certificate";
+            "The domain $self->{domain} already has an active SSL certificate";
         return $return_vars;
     }
 
@@ -90,12 +90,12 @@ sub activate_ssl_certificate {
         $return_vars->{'message'} =
               $message
             ? $message
-            : "cPanel SSL installation failed, please check the log file for more info";
+            : "cPanel SSL certificate installation failed, please check the log file for more info";
         return $return_vars;
     }
 
     $return_vars->{'status'}  = '1';
-    $return_vars->{'message'} = 'Successfully installed ssl certificate';
+    $return_vars->{'message'} = 'Successfully installed SSL certificate';
 
     return $return_vars;
 }
@@ -146,7 +146,7 @@ sub renew_ssl_certificate {
     }
 
     $return_vars->{'status'} = '1';
-    $return_vars->{'message'} = $message ? $message : 'Successfully installed ssl certificate';
+    $return_vars->{'message'} = $message ? $message : 'Successfully installed SSL certificate';
 
     return $return_vars;
 }
