@@ -35,11 +35,11 @@
           <div class="btn pull-right">
             <a href="#" class="btn btn-success btn-mini" data-toggle="modal" data-target="#service">
               <span class="fa fa-chain fa-sm"></span>
-              Install Let’s Encrypt on WHM Services
+              New Certificate for WHM Services
             </a>
             <a href="#" class="btn btn-info btn-mini" data-toggle="modal" data-target="#install">
               <span class="fa fa-chain fa-sm"></span>
-              Install Let’s Encrypt SSL Certificate
+              New Certificate for Domain
             </a>
           </div>
         </div>
