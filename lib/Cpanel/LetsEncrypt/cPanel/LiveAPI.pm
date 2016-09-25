@@ -28,6 +28,22 @@ sub get_home_dir {
     return $ENV{'HOME'};
 }
 
+sub get_ssl_vhost_by_domain {
+    my ($self, $domain) = @_;
+
+    my $ssl_vhosts = $self->fetch_installed_ssl_info;
+
+    return $ssl_vhosts->{$domain};
+}
+
+sub get_domain_aliases {
+    my ($self, $main_domain) = @_;
+
+    my $json_resp = $self->get_domain_userdata( $main_domain );
+    return $json_resp->{serveralias};
+}
+
+
 sub fetch_installed_ssl_info {
     my $self = shift;
 

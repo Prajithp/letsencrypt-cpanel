@@ -30,9 +30,10 @@ my $vars = {
 
 my $action   = $cgi->param('action');
 my $domain   = _sanitize($cgi->param('domain'));
+my $aliases  = join(',', $cgi->param('aliases'));
 
 my $letsencrypt;
-eval { $letsencrypt = Cpanel::LetsEncrypt::cPanel->new('domain' => $domain, 'api' => $cpanel) if ($domain && defined $action ); };
+eval { $letsencrypt = Cpanel::LetsEncrypt::cPanel->new('domain' => $domain, 'api' => $cpanel) if ($domain && defined $action && $action ne 'getAliases'); };
 
 if ($@) {
     print $cgi->header('application/text', '403 access denied');
@@ -59,6 +60,17 @@ if ($action eq 'install' and defined $domain) {
     build_template('index.tt', $vars);
     exit 0;
 }
+elsif ($action eq 'getAliases') {
+   my $domain_aliases = $cpanel->get_domain_aliases($domain);
+   my @aliases = split / /, $domain_aliases;
+
+   print $cgi->header('application/json');
+
+   my $json_text = JSON::to_json(\@aliases);
+   print $json_text;
+   exit 0;
+}
+
 else {
     $vars->{status} = undef;
 

@@ -46,10 +46,11 @@ my $vars = {
 
 my $action   = scalar $cgi->param('action');
 my $domain   = _sanitize(scalar $cgi->param('domain'));
+my $aliases  = join(',', $cgi->param('aliases'));
 my @services = $cgi->param('services[]');
 
-my $letsencrypt = Cpanel::LetsEncrypt->new(domain => $domain)
-    if ($domain && defined $action and _ ne 'service');
+my $letsencrypt = Cpanel::LetsEncrypt->new(domain => $domain, aliases => $aliases)
+    if (defined $domain && defined $action and $action ne 'service' and $action ne 'getAliases');
 
 if ($action eq 'renew' and defined $domain) {
 
@@ -124,6 +125,16 @@ elsif ($action eq 'service') {
     print $cgi->header();
     build_template('index.tt', $vars);
     exit 0;
+}
+elsif ($action eq 'getAliases') {
+   my $domain_aliases = $whm->get_domain_aliases($domain);
+   my @aliases = split / /, $domain_aliases;
+
+   print $cgi->header('application/json');
+
+   my $json_text = JSON::to_json(\@aliases);
+   print $json_text;
+   exit 0;
 }
 else {
     $vars->{status} = undef;

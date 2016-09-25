@@ -1,3 +1,6 @@
+2016-09-24 Prajith Ndimensionz
+ - Added option to exclude/include domain aliases
+
 2016-08-10 k-poole@github
  - Updated WHM and cPanel UI styles to match WHM 11
  - Made naming of "Let's Encyrpt" consistent throughout plugin

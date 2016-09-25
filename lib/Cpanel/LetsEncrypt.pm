@@ -66,13 +66,18 @@ sub activate_ssl_certificate {
 
     my $json_resp = $self->{whm}->get_domain_userdata( $self->{domain} );
 
-    my $aliases = $json_resp->{serveralias};
-    $aliases =~ s/\s+/\,/g;
+    my $domains;
+    if (defined $self->{aliases}) { 
+        $domains =  "$self->{domain}, $self->{aliases}";
+    }
+    else {
+        $domains = $self->{domain};
+    }
 
     my $hash = {
         'webroot-path' => $json_resp->{documentroot},
         'ip_address'   => $json_resp->{ip},
-        'domains'      => "$self->{domain}, $aliases",
+        'domains'      => $domains,
         'domain'       => $self->{domain},
         'username'     => $json_resp->{user},
     };
@@ -110,21 +115,21 @@ sub renew_ssl_certificate {
         return $return_vars;
     }
 
-    my $expired_domains = $self->{whm}->get_expired_domains();
+    my $json_resp = $self->{whm}->get_domain_userdata( $self->{domain} );
+    my $ssl_enabled_aliases = $self->{whm}->get_ssl_vhost_by_domain($self->{domain})->{'domains'};
 
-    if ( !grep /^$self->{'domain'}/i, @{$expired_domains} ) {
-        $return_vars->{'message'} = "Could not find the domain in expired list";
-        return $return_vars;
+    my $domains;
+    if (scalar $ssl_enabled_aliases) {
+        $domains  = join(',', @$ssl_enabled_aliases);
+    }
+    else {
+        $domains = $self->{domain};
     }
 
-    my $hash;
-    my $json_resp = $self->{whm}->get_domain_userdata( $self->{domain} );
-    my $aliases   = $json_resp->{serveralias};
-    $aliases =~ s/\s+/\,/g;
-    $hash = {
+    my $hash = {
         'webroot-path' => $json_resp->{documentroot},
         'ip_address'   => $json_resp->{ip},
-        'domains'      => "$self->{domain}, $aliases",
+        'domains'      => $domains,
         'domain'       => $self->{domain},
         'username'     => $json_resp->{user},
     };

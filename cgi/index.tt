@@ -158,10 +158,18 @@
                       [% END %]
                     </select>
                   </div>
-                   <input type="hidden" name="action" value="install"> 
+                  <input type="hidden" name="action" value="install"> 
+                 </div>
+                <div class="form-group domain-aliases">
+                   <label class="col-sm-2 control-label" for="altdomains">Select Alt-Domains</label>
+                   <div class="col-sm-10">
+                     <select class="form-control" name="aliases" id="altdomains" multiple>
+                       <option></option>
+                     </select>
+                   </div>
                 </div>
                 <div class="form-group">
-                  <div class="col-sm-offset-2 col-sm-10">
+                  <div class="col-sm-offset-2 col-sm-10" id="submit">
                     <button type="submit" class="btn btn-default">Submit</button>
                   </div>
                 </div>
@@ -187,5 +195,33 @@
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
   <!-- Include all compiled plugins (below), or include individual files as needed -->
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+  <script>
+    $(document).ready(function() {
+         $('.domain-aliases').hide();
+         $("#inputdomain3").change(function () {
+           var domain = $(this).val();
+           var urllocation = window.location.href;
+           var cpsess = urllocation.match(/(cpsess([0-9]+))/g);
+           var apiurl = '/' + cpsess + '/cgi/letsencrypt/letsencrypt.pl';
+           $('#altdomains').empty();
+           $.ajax({
+               url:apiurl,
+               type:'GET',
+               data: 'action=getAliases&domain=' + domain,
+               success: function( json ) {
+                 $('.domain-aliases').show();
+                 $.each(json, function(i, value) {
+	           $('#altdomains').append($('<option>').text(value).attr('value', value));
+                 });
+                 $("#submit").html(' <button type="submit" class="btn btn-default">Submit</button>');
+               },
+               beforeSend: function() {
+                 $("#submit").html('<i class="fa fa-refresh fa-spin fa-3x fa-fw"></i>');
+               },
+               
+           });
+         });
+    })
+  </script>
 </body>
 </html>

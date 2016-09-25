@@ -48,6 +48,13 @@ sub get_domain_userdata {
         : $domainuserdata->{userdata};
 }
 
+sub get_domain_aliases {
+    my ($self, $main_domain) = @_;
+
+    my $json_resp = $self->get_domain_userdata( $main_domain );
+    return $json_resp->{serveralias};
+}
+
 sub get_email_by_domain {
     my ( $self, $domain ) = @_;
 
@@ -72,6 +79,14 @@ sub get_expired_domains {
     }
 
     return \@domains;
+}
+
+sub get_ssl_vhost_by_domain {
+    my ($self, $domain) = @_;
+
+    my $ssl_vhosts = $self->fetch_installed_ssl_info;
+    
+    return $ssl_vhosts->{$domain};
 }
 
 sub install_ssl_certificate {
