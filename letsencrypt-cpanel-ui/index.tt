@@ -180,6 +180,8 @@
   </script>
   [% IF (theme == 'paper_lantern') %]
     <script type="text/javascript">
+  	$("#sidebar_home").prop("href", "[% base_url %]index.html");
+	$("#sidebar_user_manager").prop("href", "[% base_url %]user_manager/index.html");
         $("#lnkHeaderHome").prop("href", "[% base_url %]index.html");
         $("#lnkQuickHome").prop("href", "[% base_url %]index.html");
         $("#lnkQuickDomains").prop("href", "[% base_url %]addon/index.html");
