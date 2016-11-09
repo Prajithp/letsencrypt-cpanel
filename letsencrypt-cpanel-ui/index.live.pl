@@ -33,7 +33,7 @@ my $domain   = _sanitize($cgi->param('domain'));
 my $aliases  = join(',', $cgi->param('aliases'));
 
 my $letsencrypt;
-eval { $letsencrypt = Cpanel::LetsEncrypt::cPanel->new('domain' => $domain, 'api' => $cpanel) if ($domain && defined $action && $action ne 'getAliases'); };
+eval { $letsencrypt = Cpanel::LetsEncrypt::cPanel->new('domain' => $domain, 'aliases' => $aliases, 'api' => $cpanel) if ($domain && defined $action && $action ne 'getAliases'); };
 
 if ($@) {
     print $cgi->header('application/text', '403 access denied');
