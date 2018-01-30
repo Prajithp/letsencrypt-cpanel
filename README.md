@@ -2,6 +2,7 @@
 ### Notice
  I will probably be able to do maintenance and cPanel compatibility for at least a year. As far as I am aware, nobody other than me is using this. If you ARE using this plugin, please feel free to reach out for me.
 
+## Info
 This is a cPanel/WHM plugin for the [Let's Encrypt](https://letsencrypt.org/) client. This plugin uses Perl and the WHM API, and requires a server running cPanel and WHM on it.
 
 Support for service SSL certificates has been recently added, and is considered to be in beta. Please report any issues you find so that we may address them.
